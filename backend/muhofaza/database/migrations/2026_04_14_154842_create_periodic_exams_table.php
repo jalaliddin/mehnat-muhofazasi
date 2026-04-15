@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
             $table->string('title');
             $table->date('exam_date');
-            $table->enum('frequency_years', [1, 2])->default(1);
+            $table->unsignedSmallInteger('frequency_months')->default(12);
             $table->date('next_exam_date');
             $table->enum('status', ['planned', 'in_progress', 'completed'])->default('planned');
             $table->foreignId('created_by')->constrained('users');

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->enum('frequency_years', [1, 2])->default(1);
+            $table->unsignedSmallInteger('frequency_months')->default(12);
             $table->timestamps();
         });
     }
