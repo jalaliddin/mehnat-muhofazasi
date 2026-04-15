@@ -112,11 +112,11 @@ class DatabaseSeeder extends Seeder
         // Exam Types
         // -------------------------------------------------------
         $examTypes = [
-            ExamType::create(['name' => 'Mehnat muhofazasi',     'description' => 'Mehnat muhofazasi bo\'yicha bilimlarni tekshirish', 'frequency_years' => 1]),
-            ExamType::create(['name' => 'Elektr xavfsizligi',    'description' => 'Elektr qurilmalari xavfsizligi bo\'yicha tekshirish', 'frequency_years' => 1]),
-            ExamType::create(['name' => 'Yong\'in xavfsizligi',  'description' => 'Yong\'in xavfsizligi qoidalari bo\'yicha tekshirish', 'frequency_years' => 2]),
-            ExamType::create(['name' => 'Sanoat xavfsizligi',    'description' => 'Sanoat xavfsizligi talablari bo\'yicha tekshirish', 'frequency_years' => 2]),
-            ExamType::create(['name' => 'Birinchi tibbiy yordam', 'description' => 'Birinchi tibbiy yordam ko\'rsatish bo\'yicha tekshirish', 'frequency_years' => 2]),
+            ExamType::create(['name' => 'Mehnat muhofazasi',     'description' => 'Mehnat muhofazasi bo\'yicha bilimlarni tekshirish', 'frequency_months' => 12]),
+            ExamType::create(['name' => 'Elektr xavfsizligi',    'description' => 'Elektr qurilmalari xavfsizligi bo\'yicha tekshirish', 'frequency_months' => 12]),
+            ExamType::create(['name' => 'Yong\'in xavfsizligi',  'description' => 'Yong\'in xavfsizligi qoidalari bo\'yicha tekshirish', 'frequency_months' => 24]),
+            ExamType::create(['name' => 'Sanoat xavfsizligi',    'description' => 'Sanoat xavfsizligi talablari bo\'yicha tekshirish', 'frequency_months' => 24]),
+            ExamType::create(['name' => 'Birinchi tibbiy yordam', 'description' => 'Birinchi tibbiy yordam ko\'rsatish bo\'yicha tekshirish', 'frequency_months' => 24]),
         ];
 
         // -------------------------------------------------------
@@ -200,8 +200,8 @@ class DatabaseSeeder extends Seeder
                 'order_id'        => $orders[$org->id][0]->id,
                 'title'           => 'Mehnat muhofazasi imtihoni (Bajarilgan)',
                 'exam_date'       => $examDate1,
-                'frequency_years' => 1,
-                'next_exam_date'  => $examDate1->copy()->addYear(),
+                'frequency_months' => 12,
+                'next_exam_date'  => $examDate1->copy()->addMonths(12),
                 'status'          => 'completed',
                 'created_by'      => $admin->id,
             ]);
@@ -235,8 +235,8 @@ class DatabaseSeeder extends Seeder
                 'order_id'        => $orders[$org->id][1]->id,
                 'title'           => 'Elektr xavfsizligi imtihoni (Jarayonda)',
                 'exam_date'       => $examDate2,
-                'frequency_years' => 1,
-                'next_exam_date'  => $examDate2->copy()->addYear(),
+                'frequency_months' => 12,
+                'next_exam_date'  => $examDate2->copy()->addMonths(12),
                 'status'          => 'in_progress',
                 'created_by'      => $admin->id,
             ]);
@@ -249,8 +249,8 @@ class DatabaseSeeder extends Seeder
                 'order_id'        => $orders[$org->id][2]->id,
                 'title'           => 'Yong\'in xavfsizligi imtihoni (Rejalashtirilgan)',
                 'exam_date'       => $examDate3,
-                'frequency_years' => 2,
-                'next_exam_date'  => $examDate3->copy()->addYears(2),
+                'frequency_months' => 24,
+                'next_exam_date'  => $examDate3->copy()->addMonths(24),
                 'status'          => 'planned',
                 'created_by'      => $admin->id,
             ]);
