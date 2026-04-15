@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('username', $request->username)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => "Login yoki parol noto'g'ri"], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user'  => [
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'username'        => $user->username,
+                'email'           => $user->email,
+                'role'            => $user->role,
+                'organization_id' => $user->organization_id,
+                'organization'    => $user->organization,
+            ],
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Chiqildi']);
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user()->load('organization');
+
+        return response()->json($user);
+    }
+}

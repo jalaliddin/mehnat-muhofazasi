@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+*.md
+
+backend/muhofaza/vendor
+backend/muhofaza/node_modules
+backend/muhofaza/.env
+backend/muhofaza/storage/app/*
+backend/muhofaza/storage/framework/cache/*
+backend/muhofaza/storage/framework/sessions/*
+backend/muhofaza/storage/framework/views/*
+backend/muhofaza/storage/logs/*
+backend/muhofaza/bootstrap/cache/*
+
+frontend/muhofaza/node_modules
+frontend/muhofaza/dist
