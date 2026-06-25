@@ -58,7 +58,8 @@
       "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/start)",
       "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/submit -H 'Content-Type: application/json' -d '{\"answers\":[{\"exam_session_question_id\":1,\"selected_option\":\"A\"},{\"exam_session_question_id\":2,\"selected_option\":\"A\"},{\"exam_session_question_id\":3,\"selected_option\":\"B\"}]}')",
       "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/start -H 'Accept: application/json')",
-      "Bash(curl -s http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ -H 'Accept: application/json')"
+      "Bash(curl -s http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ -H 'Accept: application/json')",
+      "Bash(docker build *)"
     ],
     "additionalDirectories": [
       "/tmp"

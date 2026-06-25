@@ -6,6 +6,7 @@ RUN apk add --no-cache \
     libpng-dev \
     libxml2-dev \
     oniguruma-dev \
+    libzip-dev \
     zip \
     unzip \
     shadow
@@ -18,7 +19,8 @@ RUN docker-php-ext-install \
     exif \
     pcntl \
     bcmath \
-    gd
+    gd \
+    zip
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
