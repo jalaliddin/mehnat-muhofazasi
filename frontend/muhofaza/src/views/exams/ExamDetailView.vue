@@ -52,6 +52,9 @@
           Havolalarni yaratish
         </v-btn>
       </v-card-title>
+      <v-alert v-if="generateError" type="error" variant="tonal" density="compact" class="mx-4 mb-3">
+        {{ generateError }}
+      </v-alert>
       <v-divider />
       <v-data-table
         :headers="sessionHeaders"
@@ -209,6 +212,7 @@ const confirmRef = ref(null)
 const sessions = ref([])
 const loadingSessions = ref(false)
 const generating = ref(false)
+const generateError = ref('')
 
 const gradeOptions = [
   { label: "A'lo", value: 'excellent' },
@@ -348,10 +352,13 @@ async function fetchSessions() {
 
 async function generateLinks() {
   generating.value = true
+  generateError.value = ''
   try {
     await api.post('/exam-sessions/generate', { periodic_exam_id: Number(route.params.id) })
     await fetchSessions()
-  } catch (e) {}
+  } catch (e) {
+    generateError.value = e.response?.data?.message || 'Havola yaratishda xatolik yuz berdi'
+  }
   generating.value = false
 }
 

@@ -60,7 +60,12 @@
       "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/start -H 'Accept: application/json')",
       "Bash(curl -s http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ -H 'Accept: application/json')",
       "Bash(docker build *)",
-      "Bash(php -l app/Http/Controllers/Api/ExamTypeController.php)"
+      "Bash(php -l app/Http/Controllers/Api/ExamTypeController.php)",
+      "Bash(php -l app/Http/Controllers/Api/ExamSessionController.php)",
+      "Bash(curl -s -X POST http://localhost:8001/api/exam-sessions/generate -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{\"periodic_exam_id\":10}')",
+      "Bash(curl -s -X DELETE http://localhost:8001/api/periodic-exams/11 -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json')",
+      "Bash(curl -s -X DELETE http://localhost:8001/api/exam-types/8 -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json')",
+      "Bash(pkill -f \"artisan serve\")"
     ],
     "additionalDirectories": [
       "/tmp"
