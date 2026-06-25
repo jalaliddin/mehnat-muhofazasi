@@ -7,9 +7,6 @@ until php -r "new PDO('mysql:host=${DB_HOST:-mysql};port=${DB_PORT:-3306}', '${D
 done
 echo "==> Database server is ready."
 
-echo "==> Ensuring database '${DB_DATABASE:-muhofaza}' exists..."
-php -r "(new PDO('mysql:host=${DB_HOST:-mysql};port=${DB_PORT:-3306}', '${DB_USERNAME:-root}', '${DB_PASSWORD:-secret}'))->exec('CREATE DATABASE IF NOT EXISTS ${DB_DATABASE:-muhofaza} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');"
-
 echo "==> Running migrations..."
 php artisan migrate --force
 
