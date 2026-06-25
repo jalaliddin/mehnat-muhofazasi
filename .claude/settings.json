@@ -65,7 +65,16 @@
       "Bash(curl -s -X POST http://localhost:8001/api/exam-sessions/generate -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{\"periodic_exam_id\":10}')",
       "Bash(curl -s -X DELETE http://localhost:8001/api/periodic-exams/11 -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json')",
       "Bash(curl -s -X DELETE http://localhost:8001/api/exam-types/8 -H 'Authorization: Bearer 21|ZIDW1NSScjI0bJYqXxL0ULtiXMWPymS6GhktcrUef9327da8' -H 'Accept: application/json')",
-      "Bash(pkill -f \"artisan serve\")"
+      "Bash(pkill -f \"artisan serve\")",
+      "Bash(xargs -I{} sh -c 'echo ==={}===; cat {}')",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(sh -n docker-entrypoint.sh)",
+      "Bash(docker network *)",
+      "Bash(docker rm *)",
+      "Bash(docker run *)",
+      "Bash(docker exec *)",
+      "Bash(echo \"build exit: $?\")",
+      "Bash(docker rmi *)"
     ],
     "additionalDirectories": [
       "/tmp"
