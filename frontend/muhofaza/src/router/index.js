@@ -19,6 +19,7 @@ const routes = [
       { path: 'exams/periodic', component: () => import('../views/exams/PeriodicExamsView.vue') },
       { path: 'exams/periodic/:id', component: () => import('../views/exams/ExamDetailView.vue') },
       { path: 'exams/types', component: () => import('../views/exams/ExamTypesView.vue') },
+      { path: 'exams/questions', component: () => import('../views/exams/QuestionsOverviewView.vue') },
       { path: 'exams/types/:id/questions', component: () => import('../views/exams/QuestionsView.vue') },
       { path: 'exams/retakes', component: () => import('../views/exams/RetakesView.vue') },
       { path: 'orders', component: () => import('../views/orders/OrdersView.vue') },

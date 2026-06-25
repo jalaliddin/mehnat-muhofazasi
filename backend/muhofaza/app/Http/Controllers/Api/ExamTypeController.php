@@ -10,7 +10,7 @@ class ExamTypeController extends Controller
 {
     public function index()
     {
-        return response()->json(ExamType::all()->map(function ($t) {
+        return response()->json(ExamType::withCount('questions')->get()->map(function ($t) {
             $arr = $t->toArray();
             $arr['exam_month_name'] = $this->getMonthName($t->exam_month);
             return $arr;
