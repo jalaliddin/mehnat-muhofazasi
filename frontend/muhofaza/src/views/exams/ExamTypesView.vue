@@ -44,6 +44,7 @@
             <span v-else class="text-caption" style="color: #bbb">—</span>
           </template>
           <template #item.actions="{ item }">
+            <v-btn icon="mdi-help-circle-outline" variant="text" size="small" color="secondary" @click="$router.push(`/exams/types/${item.id}/questions`)" />
             <v-btn icon="mdi-pencil" variant="text" size="small" color="primary" @click="openEdit(item)" />
             <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="openDelete(item)" />
           </template>

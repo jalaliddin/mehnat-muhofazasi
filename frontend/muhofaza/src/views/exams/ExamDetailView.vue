@@ -41,6 +41,37 @@
       </v-row>
     </v-card>
 
+    <!-- Online test links -->
+    <v-card rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="mb-6">
+      <v-card-title class="pa-5 d-flex align-center">
+        <v-icon icon="mdi-laptop" color="primary" class="mr-2" />
+        <span style="color: #0D1B2A">Onlayn test havolalari</span>
+        <v-spacer />
+        <v-btn icon="mdi-refresh" variant="text" size="small" @click="fetchSessions" />
+        <v-btn color="primary" prepend-icon="mdi-link-variant" rounded="lg" size="small" :loading="generating" @click="generateLinks">
+          Havolalarni yaratish
+        </v-btn>
+      </v-card-title>
+      <v-divider />
+      <v-data-table
+        :headers="sessionHeaders"
+        :items="sessions"
+        :loading="loadingSessions"
+        hover
+        density="comfortable"
+      >
+        <template #item.status="{ item }">
+          <v-chip size="small" :color="sessionStatusColor(item.status)" label>{{ sessionStatusText(item.status) }}</v-chip>
+        </template>
+        <template #item.score_percent="{ item }">{{ item.score_percent != null ? item.score_percent + '%' : '-' }}</template>
+        <template #item.link="{ item }">
+          <v-btn variant="text" size="small" prepend-icon="mdi-content-copy" @click="copyLink(item)">
+            Havolani nusxalash
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
+
     <!-- Results table -->
     <v-card rounded="xl" elevation="0" style="border: 1px solid #e8eaf0">
       <v-card-title class="pa-5 d-flex align-center">
@@ -175,12 +206,22 @@ const editResult = ref(null)
 const deleteResultItem = ref(null)
 const resultFormRef = ref(null)
 const confirmRef = ref(null)
+const sessions = ref([])
+const loadingSessions = ref(false)
+const generating = ref(false)
 
 const gradeOptions = [
   { label: "A'lo", value: 'excellent' },
   { label: 'Yaxshi', value: 'good' },
   { label: 'Qoniqarli', value: 'satisfactory' },
   { label: 'Qoniqarsiz', value: 'unsatisfactory' },
+]
+
+const sessionHeaders = [
+  { title: 'Xodim', key: 'employee.full_name' },
+  { title: 'Holat', key: 'status' },
+  { title: 'Ball', key: 'score_percent' },
+  { title: 'Havola', key: 'link', sortable: false },
 ]
 
 const resultHeaders = [
@@ -288,8 +329,40 @@ async function deleteResult() {
   } catch (e) {}
 }
 
+function sessionStatusColor(s) {
+  return { pending: 'grey', in_progress: 'warning', completed: 'success', expired: 'error' }[s] || 'grey'
+}
+
+function sessionStatusText(s) {
+  return { pending: 'Boshlanmagan', in_progress: 'Jarayonda', completed: 'Tugallangan', expired: 'Muddati o\'tgan' }[s] || s
+}
+
+async function fetchSessions() {
+  loadingSessions.value = true
+  try {
+    const res = await api.get('/exam-sessions', { params: { periodic_exam_id: route.params.id } })
+    sessions.value = res.data
+  } catch (e) {}
+  loadingSessions.value = false
+}
+
+async function generateLinks() {
+  generating.value = true
+  try {
+    await api.post('/exam-sessions/generate', { periodic_exam_id: Number(route.params.id) })
+    await fetchSessions()
+  } catch (e) {}
+  generating.value = false
+}
+
+function copyLink(item) {
+  const url = `${window.location.origin}/test/${item.token}`
+  navigator.clipboard.writeText(url)
+}
+
 onMounted(async () => {
   await fetchExam()
   await fetchResults()
+  await fetchSessions()
 })
 </script>

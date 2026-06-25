@@ -35,4 +35,34 @@ class ExamResult extends Model
     {
         return $this->belongsTo(PeriodicExam::class, 'retake_exam_id');
     }
+
+    public static function applyGradeStatus(array $data): array
+    {
+        if (isset($data['grade'])) {
+            if ($data['grade'] === 'unsatisfactory') {
+                $data['is_passed'] = false;
+                $data['retake_required'] = true;
+            } else {
+                $data['is_passed'] = true;
+                $data['retake_required'] = false;
+            }
+        }
+
+        return $data;
+    }
+
+    public static function gradeForScore(int $scorePercent, int $passingScore): string
+    {
+        if ($scorePercent >= $passingScore + 20) {
+            return 'excellent';
+        }
+        if ($scorePercent >= $passingScore + 10) {
+            return 'good';
+        }
+        if ($scorePercent >= $passingScore) {
+            return 'satisfactory';
+        }
+
+        return 'unsatisfactory';
+    }
 }

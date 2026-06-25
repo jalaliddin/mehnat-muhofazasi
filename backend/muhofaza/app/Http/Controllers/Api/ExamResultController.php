@@ -131,16 +131,6 @@ class ExamResultController extends Controller
 
     private function setPassedStatus(array $data): array
     {
-        if (isset($data['grade'])) {
-            if ($data['grade'] === 'unsatisfactory') {
-                $data['is_passed'] = false;
-                $data['retake_required'] = true;
-            } else {
-                $data['is_passed'] = true;
-                $data['retake_required'] = false;
-            }
-        }
-
-        return $data;
+        return ExamResult::applyGradeStatus($data);
     }
 }

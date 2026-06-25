@@ -5,16 +5,27 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\ExamResultController;
+use App\Http\Controllers\Api\ExamSessionController;
 use App\Http\Controllers\Api\ExamTypeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PeriodicExamController;
 use App\Http\Controllers\Api\PositionController;
+use App\Http\Controllers\Api\Public\ExamSessionController as PublicExamSessionController;
+use App\Http\Controllers\Api\QuestionController;
+use App\Http\Controllers\Api\QuestionImportController;
 use App\Http\Controllers\Api\RetakeController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
+
+// Public, token-based exam sessions (employees, no auth)
+Route::prefix('public/exam-sessions')->group(function () {
+    Route::get('/{token}', [PublicExamSessionController::class, 'show']);
+    Route::post('/{token}/start', [PublicExamSessionController::class, 'start']);
+    Route::post('/{token}/submit', [PublicExamSessionController::class, 'submit']);
+});
 
 // Auth routes
 Route::prefix('auth')->group(function () {
@@ -59,6 +70,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/exam-types/by-month', [ExamTypeController::class, 'byMonth']);
     Route::get('/exam-types/calendar', [ExamTypeController::class, 'calendar']);
     Route::apiResource('exam-types', ExamTypeController::class);
+
+    // Questions (per exam type)
+    Route::get('/questions/template', [QuestionImportController::class, 'template']);
+    Route::post('/questions/import', [QuestionImportController::class, 'import']);
+    Route::get('/questions', [QuestionController::class, 'index']);
+    Route::apiResource('questions', QuestionController::class)->except(['index']);
+
+    // Exam Sessions (online test links)
+    Route::get('/exam-sessions', [ExamSessionController::class, 'index']);
+    Route::post('/exam-sessions/generate', [ExamSessionController::class, 'generate']);
+    Route::delete('/exam-sessions/{id}', [ExamSessionController::class, 'destroy']);
 
     // Reports
     Route::prefix('reports')->group(function () {

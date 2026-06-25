@@ -49,7 +49,16 @@
       "Bash(curl -s http://localhost/health)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://localhost/)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://localhost/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"test\",\"password\":\"test\"}')",
-      "Bash(curl -s -L -w '\\\\nHTTP %{http_code}' http://localhost/api/auth/login -X POST -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{\"email\":\"wrong@test.com\",\"password\":\"wrong\"}')"
+      "Bash(curl -s -L -w '\\\\nHTTP %{http_code}' http://localhost/api/auth/login -X POST -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{\"email\":\"wrong@test.com\",\"password\":\"wrong\"}')",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(curl -s http://localhost:8000/api/periodic-exams/10/employees -H 'Authorization: Bearer 20|65qLIhXaeMjZI4OuTMuMad5ePjEDgwCmj4DYesQke1a164c2')",
+      "Bash(curl -s http://localhost:8000/api/employees?organization_id=1 -H 'Authorization: Bearer 20|65qLIhXaeMjZI4OuTMuMad5ePjEDgwCmj4DYesQke1a164c2')",
+      "Bash(curl -s -X POST http://localhost:8000/api/exam-sessions/generate -H 'Authorization: Bearer 20|65qLIhXaeMjZI4OuTMuMad5ePjEDgwCmj4DYesQke1a164c2' -H 'Content-Type: application/json' -d '{\"periodic_exam_id\":10,\"employee_ids\":[37]}')",
+      "Bash(curl -s http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ)",
+      "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/start)",
+      "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/submit -H 'Content-Type: application/json' -d '{\"answers\":[{\"exam_session_question_id\":1,\"selected_option\":\"A\"},{\"exam_session_question_id\":2,\"selected_option\":\"A\"},{\"exam_session_question_id\":3,\"selected_option\":\"B\"}]}')",
+      "Bash(curl -s -X POST http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ/start -H 'Accept: application/json')",
+      "Bash(curl -s http://localhost:8000/api/public/exam-sessions/o4qFwpR3vb6ZjrsZAktoPcwz0MRsCLluJZun6dJn2oExP9sQ -H 'Accept: application/json')"
     ],
     "additionalDirectories": [
       "/tmp"

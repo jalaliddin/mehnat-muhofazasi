@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth'
 
 const routes = [
   { path: '/login', component: () => import('../views/LoginView.vue'), meta: { guest: true } },
+  { path: '/test/:token', component: () => import('../views/public/TestSessionView.vue') },
   {
     path: '/',
     component: () => import('../components/layout/AppLayout.vue'),
@@ -18,6 +19,7 @@ const routes = [
       { path: 'exams/periodic', component: () => import('../views/exams/PeriodicExamsView.vue') },
       { path: 'exams/periodic/:id', component: () => import('../views/exams/ExamDetailView.vue') },
       { path: 'exams/types', component: () => import('../views/exams/ExamTypesView.vue') },
+      { path: 'exams/types/:id/questions', component: () => import('../views/exams/QuestionsView.vue') },
       { path: 'exams/retakes', component: () => import('../views/exams/RetakesView.vue') },
       { path: 'orders', component: () => import('../views/orders/OrdersView.vue') },
       { path: 'notifications', component: () => import('../views/notifications/NotificationsView.vue') },

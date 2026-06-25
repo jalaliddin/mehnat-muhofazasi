@@ -47,11 +47,13 @@ class ExamTypeController extends Controller
         $examType = ExamType::findOrFail($id);
 
         $data = $request->validate([
-            'name'            => 'sometimes|string|max:255',
-            'description'     => 'nullable|string',
+            'name'             => 'sometimes|string|max:255',
+            'description'      => 'nullable|string',
             'frequency_months' => 'sometimes|integer|min:1',
-            'exam_month'      => 'nullable|integer|min:1|max:12',
-            'exam_month_note' => 'nullable|string|max:255',
+            'exam_month'       => 'nullable|integer|min:1|max:12',
+            'exam_month_note'  => 'nullable|string|max:255',
+            'duration_minutes' => 'sometimes|integer|min:1|max:600',
+            'passing_score'    => 'sometimes|integer|min:1|max:100',
         ]);
 
         $examType->update($data);
