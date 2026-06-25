@@ -29,6 +29,7 @@
         rounded="xl"
         hover
       >
+        <template #item.type="{ item }">{{ item.type === 'central' ? 'Markaziy' : 'Filial' }}</template>
         <template #item.actions="{ item }">
           <v-btn icon="mdi-pencil" variant="text" size="small" color="primary" @click="openEdit(item)" />
           <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="openDelete(item)" />
@@ -56,10 +57,22 @@
               class="mb-3"
             />
             <v-text-field
-              v-model="form.short_name"
-              label="Qisqa nomi"
+              v-model="form.code"
+              label="Kodi *"
               variant="outlined"
               rounded="lg"
+              :rules="[v => !!v || 'Majburiy maydon']"
+              class="mb-3"
+            />
+            <v-select
+              v-model="form.type"
+              :items="typeOptions"
+              item-title="label"
+              item-value="value"
+              label="Turi *"
+              variant="outlined"
+              rounded="lg"
+              :rules="[v => !!v || 'Majburiy maydon']"
               class="mb-3"
             />
             <v-text-field
@@ -72,13 +85,6 @@
             <v-text-field
               v-model="form.phone"
               label="Telefon"
-              variant="outlined"
-              rounded="lg"
-              class="mb-3"
-            />
-            <v-text-field
-              v-model="form.email"
-              label="Email"
               variant="outlined"
               rounded="lg"
             />
@@ -101,6 +107,8 @@
       :message="`'${deleteItem?.name}' tashkilotini o'chirmoqchimisiz?`"
       @confirm="deleteOrg"
     />
+
+    <v-snackbar v-model="errorSnackbar" color="error" timeout="4000">{{ errorMessage }}</v-snackbar>
   </div>
 </template>
 
@@ -119,20 +127,28 @@ const search = ref('')
 const formRef = ref(null)
 const confirmRef = ref(null)
 
+const errorSnackbar = ref(false)
+const errorMessage = ref('')
+
 const form = ref({
   name: '',
-  short_name: '',
+  code: '',
+  type: 'branch',
   address: '',
   phone: '',
-  email: ''
 })
+
+const typeOptions = [
+  { label: 'Markaziy', value: 'central' },
+  { label: 'Filial', value: 'branch' },
+]
 
 const headers = [
   { title: 'Nomi', key: 'name' },
-  { title: 'Qisqa nomi', key: 'short_name' },
+  { title: 'Kodi', key: 'code' },
+  { title: 'Turi', key: 'type' },
   { title: 'Manzil', key: 'address' },
   { title: 'Telefon', key: 'phone' },
-  { title: 'Email', key: 'email' },
   { title: 'Amallar', key: 'actions', sortable: false, align: 'end' },
 ]
 
@@ -150,13 +166,13 @@ function formatDate(d) {
 
 function openCreate() {
   editItem.value = null
-  form.value = { name: '', short_name: '', address: '', phone: '', email: '' }
+  form.value = { name: '', code: '', type: 'branch', address: '', phone: '' }
   dialog.value = true
 }
 
 function openEdit(item) {
   editItem.value = item
-  form.value = { name: item.name, short_name: item.short_name || '', address: item.address || '', phone: item.phone || '', email: item.email || '' }
+  form.value = { name: item.name, code: item.code || '', type: item.type || 'branch', address: item.address || '', phone: item.phone || '' }
   dialog.value = true
 }
 
@@ -186,7 +202,11 @@ async function save() {
     }
     dialog.value = false
     await fetchOrgs()
-  } catch (e) {}
+  } catch (e) {
+    const errors = e.response?.data?.errors
+    errorMessage.value = errors ? Object.values(errors).flat().join(' ') : (e.response?.data?.message || 'Saqlashda xatolik yuz berdi')
+    errorSnackbar.value = true
+  }
   saving.value = false
 }
 
@@ -194,7 +214,10 @@ async function deleteOrg() {
   try {
     await api.delete(`/organizations/${deleteItem.value.id}`)
     await fetchOrgs()
-  } catch (e) {}
+  } catch (e) {
+    errorMessage.value = e.response?.data?.message || 'O\'chirishda xatolik yuz berdi'
+    errorSnackbar.value = true
+  }
 }
 
 onMounted(fetchOrgs)
