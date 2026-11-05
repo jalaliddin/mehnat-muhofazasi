@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 
 class QuestionBankController extends Controller
 {
+    private const MESSAGES = [
+        'name.required' => 'Baza nomi kiritilishi shart',
+        'name.unique'   => 'Bu nomdagi baza allaqachon mavjud',
+    ];
+
     public function index()
     {
         return response()->json(
@@ -26,7 +31,7 @@ class QuestionBankController extends Controller
         $data = $request->validate([
             'name'        => 'required|string|max:255|unique:question_banks,name',
             'description' => 'nullable|string',
-        ]);
+        ], self::MESSAGES);
 
         $bank = QuestionBank::create($data);
 
@@ -40,7 +45,7 @@ class QuestionBankController extends Controller
         $data = $request->validate([
             'name'        => ['required', 'string', 'max:255', Rule::unique('question_banks', 'name')->ignore($bank->id)],
             'description' => 'nullable|string',
-        ]);
+        ], self::MESSAGES);
 
         $bank->update($data);
 

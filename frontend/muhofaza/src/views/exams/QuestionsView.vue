@@ -1,48 +1,14 @@
 <template>
   <div>
     <div class="d-flex align-center mb-6">
-      <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" class="mr-3" />
-      <div class="text-h5 font-weight-bold" style="color: #0D1B2A">
-        Savollar — {{ examType?.name }}
+      <v-btn icon="mdi-arrow-left" variant="text" @click="$router.push('/exams/question-banks')" class="mr-3" />
+      <div>
+        <div class="text-h5 font-weight-bold" style="color: #0D1B2A">Savollar — {{ bank?.name }}</div>
+        <div v-if="bank?.description" class="text-body-2" style="color: #777">{{ bank.description }}</div>
       </div>
     </div>
 
-    <v-card v-if="examType" rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="mb-6 pa-6">
-      <v-row>
-        <v-col cols="12" md="4">
-          <v-text-field
-            v-model.number="settings.duration_minutes"
-            label="Test vaqti (daqiqa)"
-            type="number"
-            min="1"
-            variant="outlined"
-            rounded="lg"
-            density="compact"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" md="4">
-          <v-text-field
-            v-model.number="settings.passing_score"
-            label="O'tish balli (%)"
-            type="number"
-            min="1"
-            max="100"
-            variant="outlined"
-            rounded="lg"
-            density="compact"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" md="4" class="d-flex align-center">
-          <v-btn color="primary" variant="flat" rounded="lg" :loading="savingSettings" @click="saveSettings">
-            Sozlamalarni saqlash
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-card>
-
-    <v-card rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="mb-4 pa-4">
+    <v-card v-if="authStore.isAdmin" rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="mb-4 pa-4">
       <div class="d-flex flex-wrap align-center gap-2">
         <v-btn variant="outlined" rounded="lg" prepend-icon="mdi-download" @click="downloadTemplate">
           Excel shablonni yuklab olish
@@ -72,7 +38,7 @@
 
     <v-card rounded="xl" elevation="0" style="border: 1px solid #e8eaf0">
       <v-data-table
-        :headers="headers"
+        :headers="visibleHeaders"
         :items="questions"
         :loading="loading"
         hover
@@ -157,20 +123,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../../services/api'
 import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
+import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
-const examTypeId = Number(route.params.id)
+const authStore = useAuthStore()
+const bankId = Number(route.params.id)
 
-const examType = ref(null)
+const bank = ref(null)
 const questions = ref([])
 const loading = ref(false)
 const dialog = ref(false)
 const saving = ref(false)
-const savingSettings = ref(false)
 const importing = ref(false)
 const importResult = ref(null)
 const editItem = ref(null)
@@ -179,14 +146,14 @@ const formRef = ref(null)
 const confirmRef = ref(null)
 const fileInput = ref(null)
 
-const settings = ref({ duration_minutes: 30, passing_score: 60 })
-
 const headers = [
   { title: 'Savol', key: 'question_text' },
   { title: 'Variantlar', key: 'options', sortable: false },
   { title: 'Ball', key: 'points' },
   { title: 'Amallar', key: 'actions', sortable: false, align: 'end' },
 ]
+// Operator savollarni faqat ko'radi — amallar ustuni yashiriladi.
+const visibleHeaders = computed(() => authStore.isAdmin ? headers : headers.filter(h => h.key !== 'actions'))
 
 const defaultForm = () => ({
   question_text: '',
@@ -228,33 +195,20 @@ function openDelete(item) {
   confirmRef.value.open()
 }
 
-async function fetchExamType() {
+async function fetchBank() {
   try {
-    const res = await api.get(`/exam-types/${examTypeId}`)
-    examType.value = res.data
-    settings.value = {
-      duration_minutes: res.data.duration_minutes,
-      passing_score: res.data.passing_score,
-    }
+    const res = await api.get(`/question-banks/${bankId}`)
+    bank.value = res.data
   } catch (e) {}
 }
 
 async function fetchQuestions() {
   loading.value = true
   try {
-    const res = await api.get('/questions', { params: { exam_type_id: examTypeId } })
+    const res = await api.get('/questions', { params: { question_bank_id: bankId } })
     questions.value = res.data
   } catch (e) {}
   loading.value = false
-}
-
-async function saveSettings() {
-  savingSettings.value = true
-  try {
-    await api.put(`/exam-types/${examTypeId}`, settings.value)
-    await fetchExamType()
-  } catch (e) {}
-  savingSettings.value = false
 }
 
 async function save() {
@@ -263,7 +217,7 @@ async function save() {
   saving.value = true
   try {
     const payload = {
-      exam_type_id: examTypeId,
+      question_bank_id: bankId,
       question_text: form.value.question_text,
       options: form.value.options.filter(o => o.text.trim() !== ''),
       correct_option: form.value.correct_option,
@@ -308,7 +262,7 @@ async function handleImport(e) {
   importResult.value = null
   try {
     const formData = new FormData()
-    formData.append('exam_type_id', examTypeId)
+    formData.append('question_bank_id', bankId)
     formData.append('file', file)
     const res = await api.post('/questions/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -321,7 +275,7 @@ async function handleImport(e) {
 }
 
 onMounted(async () => {
-  await fetchExamType()
+  await fetchBank()
   await fetchQuestions()
 })
 </script>

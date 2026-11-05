@@ -24,7 +24,7 @@ class QuestionBankApiTest extends TestCase
         $id = $this->postJson('/api/question-banks', ['name' => 'Elektr xavfsizligi', 'description' => 'Elektr'])
             ->assertCreated()->json('id');
         $this->postJson('/api/question-banks', ['name' => 'Elektr xavfsizligi'])
-            ->assertStatus(422)->assertJsonValidationErrors('name');
+            ->assertStatus(422)->assertJsonPath('errors.name.0', 'Bu nomdagi baza allaqachon mavjud');
         $this->putJson("/api/question-banks/{$id}", ['name' => "Elektr xavfsizligi (yangi)"])
             ->assertOk()->assertJsonPath('name', 'Elektr xavfsizligi (yangi)');
 

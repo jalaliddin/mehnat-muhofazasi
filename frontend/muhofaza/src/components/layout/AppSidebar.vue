@@ -45,7 +45,7 @@
       <NavGroup label="IMTIHONLAR" icon="mdi-clipboard-check" :rail="rail" :open="groupOpen.exams" @toggle="groupOpen.exams = !groupOpen.exams">
         <NavItem icon="mdi-calendar-check" label="Davriy Imtihonlar" path="/exams/periodic" :rail="rail" :indent="!rail" />
         <NavItem icon="mdi-shape" label="Imtihon Turlari" path="/exams/types" :rail="rail" :indent="!rail" />
-        <NavItem icon="mdi-help-circle-outline" label="Savollar" path="/exams/questions" :rail="rail" :indent="!rail" />
+        <NavItem icon="mdi-database-outline" label="Savollar bazalari" path="/exams/question-banks" :rail="rail" :indent="!rail" />
         <NavItem icon="mdi-refresh" label="Qayta Topshirish" path="/exams/retakes" :rail="rail" :indent="!rail" :badge="retakesCount" />
         <NavItem icon="mdi-certificate" label="Sertifikatlar" path="/certificates" :rail="rail" :indent="!rail" />
       </NavGroup>
