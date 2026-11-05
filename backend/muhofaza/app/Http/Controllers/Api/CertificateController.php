@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\CertificatePdf;
 use App\Services\CertificateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CertificateController extends Controller
 {
@@ -109,6 +110,49 @@ class CertificateController extends Controller
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"sertifikatlar-{$exam->id}.pdf\"",
         ]);
+    }
+
+    public function download(Request $request, $id)
+    {
+        $certificate = Certificate::with('periodicExam')->findOrFail($id);
+        $this->authorizeExam($request->user(), $certificate->periodicExam);
+
+        $signed = $request->query('type') === 'signed';
+        $path = $signed ? $certificate->signed_path : $certificate->generated_path;
+
+        if (! $path || ! Storage::disk('local')->exists($path)) {
+            return response()->json(['message' => 'Fayl topilmadi'], 404);
+        }
+
+        $name = $signed
+            ? "sertifikat-{$certificate->number}-imzoli.".pathinfo($path, PATHINFO_EXTENSION)
+            : "sertifikat-{$certificate->number}.pdf";
+
+        return Storage::disk('local')->download($path, $name);
+    }
+
+    public function uploadSigned(Request $request, $id)
+    {
+        $certificate = Certificate::with('periodicExam')->findOrFail($id);
+        $this->authorizeExam($request->user(), $certificate->periodicExam);
+
+        $data = $request->validate([
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        $this->certificates->storeSigned($certificate, $data['file'], $request->user());
+
+        return response()->json($certificate->fresh(['employee.organization', 'periodicExam']));
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $certificate = Certificate::with('periodicExam')->findOrFail($id);
+        $this->authorizeExam($request->user(), $certificate->periodicExam);
+
+        $certificate->delete();
+
+        return response()->json(['message' => "O'chirildi"]);
     }
 
     private function authorizeExam(User $user, PeriodicExam $exam): void

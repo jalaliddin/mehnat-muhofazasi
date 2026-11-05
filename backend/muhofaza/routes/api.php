@@ -88,6 +88,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/certificates/generate', [CertificateController::class, 'generate']);
     Route::get('/certificates/print', [CertificateController::class, 'print']);
     Route::post('/certificates/{id}/regenerate', [CertificateController::class, 'regenerate']);
+    Route::get('/certificates/{id}/download', [CertificateController::class, 'download']);
+    Route::post('/certificates/{id}/signed', [CertificateController::class, 'uploadSigned']);
+    Route::delete('/certificates/{id}', [CertificateController::class, 'destroy']);
 
     // Reports
     Route::prefix('reports')->group(function () {
