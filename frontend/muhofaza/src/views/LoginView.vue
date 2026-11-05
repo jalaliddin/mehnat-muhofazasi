@@ -5,8 +5,8 @@
         <v-card rounded="xl" elevation="10" class="pa-8">
           <div class="text-center mb-6">
             <v-icon icon="mdi-shield-check" size="64" color="primary" />
-            <h1 class="text-h5 font-weight-bold mt-3" style="color: #0D1B2A">Urganchtransgaz</h1>
-            <p class="text-body-2" style="color: #666">Mehnat Muhofazasi va Sanoat Xavfsizligi</p>
+            <h1 class="text-h5 font-weight-bold mt-3" style="color: #0D1B2A">Mehnat Muhofazasi</h1>
+            <p class="text-body-2" style="color: #666">Sanoat xavfsizligi va davriy imtihonlar tizimi</p>
           </div>
 
           <v-alert v-if="error" type="error" variant="tonal" class="mb-4" rounded="lg">{{ error }}</v-alert>

@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         // Organizations
         // -------------------------------------------------------
         $central = Organization::create([
-            'name'    => 'Urganchtransgaz UK Markaziy Apparati',
+            'name'    => 'Markaziy Apparat',
             'code'    => 'URGENCH-MR',
             'type'    => 'central',
             'address' => 'Urgench sh., Markaziy ko\'cha 1',
@@ -81,7 +81,7 @@ class DatabaseSeeder extends Seeder
         $admin = User::create([
             'name'            => 'Administrator',
             'username'        => 'admin',
-            'email'           => 'admin@urgench.uz',
+            'email'           => 'admin@mehnatmuhofazasi.uz',
             'password'        => Hash::make('admin123'),
             'role'            => 'admin',
             'organization_id' => null,
@@ -91,7 +91,7 @@ class DatabaseSeeder extends Seeder
         $urgenchOp = User::create([
             'name'            => 'Markaziy Apparat Operatori',
             'username'        => 'urgench_op',
-            'email'           => 'urgench@urgench.uz',
+            'email'           => 'urgench@mehnatmuhofazasi.uz',
             'password'        => Hash::make('pass123'),
             'role'            => 'operator',
             'organization_id' => $central->id,
@@ -101,7 +101,7 @@ class DatabaseSeeder extends Seeder
         $xivaOp = User::create([
             'name'            => 'Xiva GTS Operatori',
             'username'        => 'xiva_op',
-            'email'           => 'xiva@urgench.uz',
+            'email'           => 'xiva@mehnatmuhofazasi.uz',
             'password'        => Hash::make('pass123'),
             'role'            => 'operator',
             'organization_id' => $xiva->id,

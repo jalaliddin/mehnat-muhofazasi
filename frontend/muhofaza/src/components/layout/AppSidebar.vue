@@ -10,8 +10,8 @@
     <div class="d-flex align-center px-4 py-4" style="border-bottom: 1px solid rgba(255,255,255,0.1); min-height: 64px">
       <v-icon icon="mdi-shield-check" color="white" size="28" class="mr-3 flex-shrink-0" />
       <div v-if="!rail" class="flex-grow-1 overflow-hidden">
-        <div class="text-body-1 font-weight-bold text-white text-truncate">Urganchtransgaz</div>
-        <div class="text-caption" style="color: rgba(255,255,255,0.5)">Mehnat Muhofazasi</div>
+        <div class="text-body-1 font-weight-bold text-white text-truncate">Mehnat Muhofazasi</div>
+        <div class="text-caption" style="color: rgba(255,255,255,0.5)">Sanoat xavfsizligi</div>
       </div>
       <v-btn
         variant="text"

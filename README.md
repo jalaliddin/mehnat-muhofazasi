@@ -1,6 +1,6 @@
-# Muhofaza — Mehnat Muhofazasi Tizimi
+# Mehnat Muhofazasi Tizimi
 
-Urganchtransgaz UK xodimlari uchun davriy xavfsizlik imtihonlarini boshqarish tizimi.
+Mehnat muhofazasi va sanoat xavfsizligi bo'yicha davriy imtihonlarni boshqarish tizimi — [mehnatmuhofazasi.uz](https://mehnatmuhofazasi.uz).
 
 ## Texnologiyalar
 
@@ -24,8 +24,8 @@ Urganchtransgaz UK xodimlari uchun davriy xavfsizlik imtihonlarini boshqarish ti
 ### 1. Loyihani yuklab oling
 
 ```bash
-git clone <repo-url> muhofaza.urtg.uz
-cd muhofaza.urtg.uz
+git clone <repo-url> mehnatmuhofazasi.uz
+cd mehnatmuhofazasi.uz
 ```
 
 ### 2. `.env` faylini tayyorlang
@@ -74,8 +74,9 @@ docker compose up -d --build
 > Seeder ishga tushirilgandan keyin:
 
 ```
-Admin:    admin@muhofaza.uz   / password
-Operator: operator@muhofaza.uz / password
+Admin:    admin      / admin123   (barcha tashkilotlar)
+Operator: urgench_op / pass123    (Markaziy Apparat)
+Operator: xiva_op    / pass123    (Xiva GTS)
 ```
 
 Agar seeder ishlamagan bo'lsa, qo'lda ishga tushiring:
@@ -176,7 +177,7 @@ docker compose down -v
 ## Loyiha tuzilmasi
 
 ```
-muhofaza.urtg.uz/
+mehnatmuhofazasi.uz/
 ├── docker-compose.yml          # Docker Compose konfiguratsiya
 ├── .env.example                # Root env namunasi
 ├── .dockerignore
