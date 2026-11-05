@@ -81,7 +81,15 @@ class ExamResultController extends Controller
 
     public function destroy($id)
     {
-        ExamResult::findOrFail($id)->delete();
+        $result = ExamResult::with('periodicExam')->findOrFail($id);
+        $user = request()->user();
+
+        // Natija o'chirilsa uning sertifikati va imzoli skani ham o'chadi — operator faqat o'z tashkilotiniki.
+        if ($user->role === 'operator' && $user->organization_id && $result->periodicExam->organization_id !== $user->organization_id) {
+            abort(403);
+        }
+
+        $result->delete();
 
         return response()->json(['message' => 'Deleted']);
     }

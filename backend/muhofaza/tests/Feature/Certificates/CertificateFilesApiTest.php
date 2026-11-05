@@ -108,4 +108,15 @@ class CertificateFilesApiTest extends TestCase
 
         $this->assertSame(1, Certificate::count());
     }
+
+    public function test_operator_cannot_delete_other_org_result_with_certificate(): void
+    {
+        $cert = $this->issued($this->makeOrganization('B'));
+        Sanctum::actingAs($this->makeUser('operator', $this->makeOrganization('A')));
+
+        $this->deleteJson("/api/exam-results/{$cert->exam_result_id}")->assertForbidden();
+
+        $this->assertSame(1, Certificate::count());
+        Storage::disk('local')->assertExists($cert->generated_path);
+    }
 }

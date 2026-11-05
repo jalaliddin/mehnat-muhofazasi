@@ -8,14 +8,18 @@ use App\Models\CertificateSetting;
 use App\Models\ExamResult;
 use App\Models\PeriodicExam;
 use App\Models\User;
+use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class CertificateService
 {
+    use DetectsConcurrencyErrors;
+
     private const ALLOCATION_ATTEMPTS = 3;
 
     public function __construct(private CertificatePdf $pdf)
@@ -40,10 +44,23 @@ class CertificateService
 
         $data = $this->buildData($result);
 
-        if ($certificate) {
-            $certificate->update(['data' => $data]);
-        } else {
+        if (! $certificate) {
+            // Parallel so'rov shu natijaga sertifikatni allaqachon yaratgan bo'lsa, o'shani qaytaradi.
             $certificate = $this->createWithNumbers($result, $data);
+
+            if ($certificate->signed_path) {
+                throw new CertificateException("Imzolangan sertifikatni qayta yaratib bo'lmaydi");
+            }
+        }
+
+        if (! $certificate->wasRecentlyCreated) {
+            // Ma'lumot o'zgarmagan va PDF joyida bo'lsa, qayta chizish shart emas (ommaviy yaratish tez bo'ladi).
+            if ($certificate->data == $data && $certificate->generated_path
+                && Storage::disk('local')->exists($certificate->generated_path)) {
+                return $certificate;
+            }
+
+            $certificate->update(['data' => $data]);
         }
 
         $path = "certificates/generated/{$certificate->number}.pdf";
@@ -118,6 +135,11 @@ class CertificateService
             }
         }
 
+        $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+        if (config('app.env') === 'production' && in_array($host, [null, 'localhost', '127.0.0.1', '::1'], true)) {
+            $warnings[] = "APP_URL localhost'ga qaragan — QR kod ishlamaydi. Serverda APP_URL ni sayt domeniga sozlang";
+        }
+
         return $warnings;
     }
 
@@ -143,7 +165,17 @@ class CertificateService
                         'data'                => $data,
                     ]);
                 });
-            } catch (UniqueConstraintViolationException $e) {
+            } catch (Throwable $e) {
+                // Raqam uchun poyga: MySQL odatda deadlock (40001) beradi, ba'zan unique buzilishi.
+                if (! $e instanceof UniqueConstraintViolationException && ! $this->causedByConcurrencyError($e)) {
+                    throw $e;
+                }
+
+                $existing = Certificate::where('exam_result_id', $result->id)->first();
+                if ($existing) {
+                    return $existing;
+                }
+
                 if ($attempt >= self::ALLOCATION_ATTEMPTS) {
                     throw $e;
                 }

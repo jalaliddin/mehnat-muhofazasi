@@ -3,7 +3,12 @@
 namespace Tests\Feature\Certificates;
 
 use App\Exceptions\CertificateException;
+use App\Models\Certificate;
 use App\Models\CertificateSetting;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use PDOException;
 use App\Services\CertificateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -139,5 +144,89 @@ class CertificateServiceTest extends TestCase
             ['Kurs sanalari kiritilmagan', 'Soat hajmi kiritilmagan', "Sertifikat sozlamalari to'ldirilmagan"],
             app(CertificateService::class)->missingFieldWarnings($exam)
         );
+    }
+
+    public function test_issue_retries_after_deadlock(): void
+    {
+        $result = $this->makeResult($this->makeExam());
+        $thrown = false;
+        Certificate::creating(function () use (&$thrown) {
+            if (! $thrown) {
+                $thrown = true;
+                throw new QueryException('mysql', 'insert into certificates', [],
+                    new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction'));
+            }
+        });
+
+        $cert = app(CertificateService::class)->issue($result);
+
+        $this->assertTrue($thrown);
+        $this->assertSame(1, Certificate::count());
+        $this->assertNotNull($cert->generated_path);
+    }
+
+    public function test_issue_uses_certificate_created_concurrently_for_same_result(): void
+    {
+        $result = $this->makeResult($this->makeExam());
+        CertificateSetting::current();
+        $inserted = false;
+        // Boshqa so'rov xuddi shu natijaga sertifikatni bizning tekshiruvimizdan keyin, insert'dan oldin yaratadi.
+        Event::listen('eloquent.retrieved: '.CertificateSetting::class, function () use ($result, &$inserted) {
+            if ($inserted) {
+                return;
+            }
+            $inserted = true;
+            DB::table('certificates')->insert([
+                'exam_result_id' => $result->id, 'employee_id' => $result->employee_id, 'periodic_exam_id' => $result->periodic_exam_id,
+                'year' => 2026, 'sequence' => 99, 'number' => '2026-0099', 'registration_number' => 99,
+                'public_code' => str_repeat('c', 32), 'data' => json_encode(['full_name' => 'X']),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
+
+        $cert = app(CertificateService::class)->issue($result);
+
+        $this->assertSame('2026-0099', $cert->number);
+        $this->assertSame(1, Certificate::count());
+        $this->assertStringStartsWith('%PDF', Storage::disk('local')->get($cert->fresh()->generated_path));
+    }
+
+    public function test_reissue_with_unchanged_data_skips_render(): void
+    {
+        $svc = app(CertificateService::class);
+        $result = $this->makeResult($this->makeExam());
+        $cert = $svc->issue($result);
+        Storage::disk('local')->put($cert->generated_path, 'MARKER');
+
+        $svc->issue($result->fresh());
+        $this->assertSame('MARKER', Storage::disk('local')->get($cert->generated_path));
+
+        CertificateSetting::current()->update(['city' => 'Xiva sh.']);
+        $svc->issue($result->fresh());
+        $this->assertStringStartsWith('%PDF', Storage::disk('local')->get($cert->generated_path));
+    }
+
+    public function test_reissue_rerenders_when_file_is_missing(): void
+    {
+        $svc = app(CertificateService::class);
+        $result = $this->makeResult($this->makeExam());
+        $cert = $svc->issue($result);
+        Storage::disk('local')->delete($cert->generated_path);
+
+        $svc->issue($result->fresh());
+
+        Storage::disk('local')->assertExists($cert->generated_path);
+    }
+
+    public function test_warns_when_production_app_url_is_localhost(): void
+    {
+        $exam = $this->makeExam();
+        $message = "APP_URL localhost'ga qaragan — QR kod ishlamaydi. Serverda APP_URL ni sayt domeniga sozlang";
+
+        config(['app.env' => 'production', 'app.url' => 'http://localhost']);
+        $this->assertContains($message, app(CertificateService::class)->missingFieldWarnings($exam));
+
+        config(['app.url' => 'https://mehnatmuhofazasi.uz']);
+        $this->assertNotContains($message, app(CertificateService::class)->missingFieldWarnings($exam));
     }
 }
