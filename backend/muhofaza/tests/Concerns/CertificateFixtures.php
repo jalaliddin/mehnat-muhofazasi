@@ -136,7 +136,7 @@ trait CertificateFixtures
             'token'            => Str::random(48),
             'status'           => 'pending',
             'duration_minutes' => 30,
-            'total_points'     => (int) $exam->examType->questions()->sum('points'),
+            'total_points'     => 0,
         ]);
     }
 

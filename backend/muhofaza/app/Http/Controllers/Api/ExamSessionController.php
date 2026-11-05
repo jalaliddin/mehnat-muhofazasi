@@ -53,10 +53,16 @@ class ExamSessionController extends Controller
             abort(422, 'Tashkilotda faol xodimlar topilmadi');
         }
 
-        $totalPoints = $exam->examType->questions()->sum('points');
+        $banks = $exam->examType->questionBanks()->withCount('questions')->get();
 
-        if ($totalPoints === 0) {
-            abort(422, 'Bu imtihon turi uchun savollar kiritilmagan. Avval "Savollar" bo\'limida savol qo\'shing.');
+        if ($banks->isEmpty()) {
+            abort(422, 'Bu imtihon turi uchun test tarkibi belgilanmagan. Imtihon turlari sahifasida "Test tarkibi"ni to\'ldiring.');
+        }
+
+        foreach ($banks as $bank) {
+            if ($bank->questions_count < $bank->pivot->question_count) {
+                abort(422, "«{$bank->name}» bazasida savollar yetarli emas: {$bank->questions_count} ta bor, {$bank->pivot->question_count} ta kerak.");
+            }
         }
 
         $sessions = [];
@@ -70,7 +76,8 @@ class ExamSessionController extends Controller
                 [
                     'token'            => Str::random(48),
                     'duration_minutes' => $exam->examType->duration_minutes,
-                    'total_points'     => $totalPoints,
+                    // Ballar test boshlanganda, tushgan savollar bo'yicha hisoblanadi.
+                    'total_points'     => 0,
                 ]
             );
 

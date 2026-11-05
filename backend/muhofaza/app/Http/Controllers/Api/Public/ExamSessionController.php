@@ -24,7 +24,7 @@ class ExamSessionController extends Controller
             'exam_title'       => $session->periodicExam->title,
             'exam_type_name'   => $session->periodicExam->examType->name,
             'duration_minutes' => $session->duration_minutes,
-            'total_questions'  => $session->sessionQuestions()->count() ?: $session->periodicExam->examType->questions()->count(),
+            'total_questions'  => $session->sessionQuestions()->count() ?: $session->periodicExam->examType->questionTotal(),
             'score_percent'    => $session->score_percent,
             'started_at'       => $session->started_at,
             'certificate'      => $session->examResult?->certificate?->publicSummary(),
@@ -39,7 +39,10 @@ class ExamSessionController extends Controller
             abort(422, 'Test allaqachon boshlangan yoki yakunlangan');
         }
 
-        $questions = $session->periodicExam->examType->questions()->get();
+        // Tarkibdagi har bir bazadan belgilangan sondagi savol tasodifiy olinadi (kamroq qolgan bo'lsa — borining hammasi).
+        $questions = $session->periodicExam->examType->questionBanks()->get()->flatMap(
+            fn ($bank) => $bank->questions()->inRandomOrder()->limit($bank->pivot->question_count)->get()
+        );
 
         if ($questions->isEmpty()) {
             abort(422, 'Bu test turi uchun savollar topilmadi');
@@ -62,9 +65,11 @@ class ExamSessionController extends Controller
             ];
         }
 
-        DB::transaction(function () use ($rows, $session, $now) {
+        $totalPoints = (int) $questions->sum('points');
+
+        DB::transaction(function () use ($rows, $session, $now, $totalPoints) {
             ExamSessionQuestion::insert($rows);
-            $session->update(['status' => 'in_progress', 'started_at' => $now]);
+            $session->update(['status' => 'in_progress', 'started_at' => $now, 'total_points' => $totalPoints]);
         });
 
         $sessionQuestions = $session->sessionQuestions()->with('question')->get()->map(function ($sq) {

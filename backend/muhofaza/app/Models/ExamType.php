@@ -34,12 +34,4 @@ class ExamType extends Model
 
         return (int) $this->questionBanks()->sum('exam_type_question_bank.question_count');
     }
-
-    /**
-     * VAQTINCHALIK (Task 2 da olib tashlanadi): tarkibdagi bazalarning barcha savollari.
-     */
-    public function questions()
-    {
-        return $this->hasManyThrough(Question::class, ExamTypeQuestionBank::class, 'exam_type_id', 'question_bank_id', 'id', 'question_bank_id');
-    }
 }
