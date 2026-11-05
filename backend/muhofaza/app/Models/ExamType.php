@@ -16,8 +16,30 @@ class ExamType extends Model
         return $this->hasMany(PeriodicExam::class);
     }
 
+    public function questionBanks()
+    {
+        return $this->belongsToMany(QuestionBank::class, 'exam_type_question_bank')
+            ->withPivot('question_count')
+            ->withTimestamps();
+    }
+
+    /**
+     * Testdagi jami savollar soni — tarkibdagi question_count yig'indisi.
+     */
+    public function questionTotal(): int
+    {
+        if ($this->relationLoaded('questionBanks')) {
+            return (int) $this->questionBanks->sum('pivot.question_count');
+        }
+
+        return (int) $this->questionBanks()->sum('exam_type_question_bank.question_count');
+    }
+
+    /**
+     * VAQTINCHALIK (Task 2 da olib tashlanadi): tarkibdagi bazalarning barcha savollari.
+     */
     public function questions()
     {
-        return $this->hasMany(Question::class);
+        return $this->hasManyThrough(Question::class, ExamTypeQuestionBank::class, 'exam_type_id', 'question_bank_id', 'id', 'question_bank_id');
     }
 }

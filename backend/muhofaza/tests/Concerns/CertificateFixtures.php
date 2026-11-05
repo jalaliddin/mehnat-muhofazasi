@@ -12,6 +12,7 @@ use App\Models\Organization;
 use App\Models\PeriodicExam;
 use App\Models\Position;
 use App\Models\Question;
+use App\Models\QuestionBank;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -59,15 +60,7 @@ trait CertificateFixtures
             'training_hours'   => 72,
         ], $typeAttrs));
 
-        foreach (['Birinchi savol', 'Ikkinchi savol'] as $text) {
-            Question::create([
-                'exam_type_id'   => $type->id,
-                'question_text'  => $text,
-                'options'        => [['key' => 'A', 'text' => "To'g'ri"], ['key' => 'B', 'text' => "Noto'g'ri"]],
-                'correct_option' => 'A',
-                'points'         => 1,
-            ]);
-        }
+        $type->questionBanks()->attach($this->makeBank()->id, ['question_count' => 2]);
 
         return PeriodicExam::create(array_merge([
             'organization_id'   => $org->id,
@@ -81,6 +74,23 @@ trait CertificateFixtures
             'course_start_date' => '2026-11-01',
             'course_end_date'   => '2026-11-07',
         ], $examAttrs));
+    }
+
+    protected function makeBank(?string $name = null, int $questionCount = 2, int $points = 1): QuestionBank
+    {
+        $bank = QuestionBank::create(['name' => $name ?? 'Baza '.Str::upper(Str::random(6))]);
+
+        for ($i = 1; $i <= $questionCount; $i++) {
+            Question::create([
+                'question_bank_id' => $bank->id,
+                'question_text'    => "{$bank->name}: savol {$i}",
+                'options'          => [['key' => 'A', 'text' => "To'g'ri"], ['key' => 'B', 'text' => "Noto'g'ri"]],
+                'correct_option'   => 'A',
+                'points'           => $points,
+            ]);
+        }
+
+        return $bank;
     }
 
     protected function makeEmployee(PeriodicExam $exam, string $name = 'Aliyev Vali G‘aniyevich'): Employee

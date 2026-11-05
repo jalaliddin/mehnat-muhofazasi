@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Question extends Model
 {
     protected $fillable = [
-        'exam_type_id', 'question_text', 'options', 'correct_option', 'points',
+        'question_bank_id', 'question_text', 'options', 'correct_option', 'points',
     ];
 
     protected $casts = [
         'options' => 'array',
     ];
 
-    public function examType()
+    public function bank()
     {
-        return $this->belongsTo(ExamType::class);
+        return $this->belongsTo(QuestionBank::class, 'question_bank_id');
     }
 }
