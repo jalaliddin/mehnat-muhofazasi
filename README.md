@@ -108,6 +108,24 @@ To'ldirilmagan maydonlar sertifikatda `____` bo'lib chiqadi. To'ldirgandan keyin
 
 > **Muhim:** QR havolasi `APP_URL` dan olinadi. Productionda `backend/muhofaza/.env.docker` ichida `APP_URL=https://mehnatmuhofazasi.uz` bo'lishi shart. Fayllar `storage/app/private/certificates/` da saqlanadi (Docker'da `app_storage` volume).
 
+## Savollar bazalari
+
+Savollar imtihon turidan mustaqil **bazalarda** saqlanadi (masalan, "Elektr xavfsizligi" — 200 savol). Har bir imtihon turida **test tarkibi** belgilanadi: qaysi bazadan nechta savol olinadi.
+
+```
+"Mehnat muhofazasi" testi:
+  Elektr xavfsizligi      → 10 ta
+  Yong'in xavfsizligi     → 10 ta
+  Birinchi tibbiy yordam  →  5 ta   (jami 25 ta savol)
+```
+
+- **Savollar bazalari** sahifasida baza yaratiladi, savollar qo'lda qo'shiladi yoki Excel shablon orqali import qilinadi.
+- **Imtihon turlari** → "Test tarkibi" tugmasi: bazalar, har biridan nechta savol, test vaqti va o'tish balli.
+- Test boshlanganda har bir o'quvchiga har bazadan belgilangan sondagi savol **tasodifiy** tanlanadi va hammasi aralashtiriladi. Ball foizi tushgan savollar bo'yicha hisoblanadi.
+- Bazada savol yetmasa yoki tarkib bo'sh bo'lsa, test havolalari yaratilmaydi va sababi aniq aytiladi.
+- Bazalar, savollar va tarkibni faqat **admin** o'zgartiradi; operator faqat ko'radi. Testda ishlatilayotgan bazani o'chirib bo'lmaydi.
+- Yangilashda mavjud savollar avtomatik ravishda imtihon turi nomli bazaga ko'chadi va tarkibga "hamma savol" yoziladi — mavjud testlar avvalgidek ishlaydi.
+
 ## Testlar
 
 Backend testlari alohida `muhofaza_test` MySQL bazasida ishlaydi (ishchi bazaga tegmaydi):
