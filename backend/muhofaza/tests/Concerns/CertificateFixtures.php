@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\ExamResult;
+use App\Models\ExamSession;
 use App\Models\ExamType;
 use App\Models\Organization;
 use App\Models\PeriodicExam;
@@ -115,6 +116,18 @@ trait CertificateFixtures
         $result->save();
 
         return $result;
+    }
+
+    protected function makeSession(PeriodicExam $exam, Employee $employee): ExamSession
+    {
+        return ExamSession::create([
+            'periodic_exam_id' => $exam->id,
+            'employee_id'      => $employee->id,
+            'token'            => Str::random(48),
+            'status'           => 'pending',
+            'duration_minutes' => 30,
+            'total_points'     => (int) $exam->examType->questions()->sum('points'),
+        ]);
     }
 
     protected function makeCertificate(ExamResult $result, array $attrs = []): Certificate

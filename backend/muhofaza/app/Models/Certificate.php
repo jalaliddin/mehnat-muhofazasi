@@ -41,6 +41,18 @@ class Certificate extends Model
         return str_pad((string) $this->registration_number, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * O'quvchining test sahifasi uchun qisqa ma'lumot.
+     */
+    public function publicSummary(): array
+    {
+        return [
+            'number'      => $this->number,
+            'status'      => $this->status,
+            'public_code' => $this->public_code,
+        ];
+    }
+
     public function examResult()
     {
         return $this->belongsTo(ExamResult::class);

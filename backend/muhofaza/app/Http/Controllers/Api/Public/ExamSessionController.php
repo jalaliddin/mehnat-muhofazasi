@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ExamResult;
 use App\Models\ExamSession;
 use App\Models\ExamSessionQuestion;
+use App\Services\CertificateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ class ExamSessionController extends Controller
     {
         $session = $this->findSessionAndExpire($token);
 
-        $session->load('periodicExam.examType', 'employee');
+        $session->load('periodicExam.examType', 'employee', 'examResult.certificate');
 
         return response()->json([
             'status'           => $session->status,
@@ -26,6 +27,7 @@ class ExamSessionController extends Controller
             'total_questions'  => $session->sessionQuestions()->count() ?: $session->periodicExam->examType->questions()->count(),
             'score_percent'    => $session->score_percent,
             'started_at'       => $session->started_at,
+            'certificate'      => $session->examResult?->certificate?->publicSummary(),
         ]);
     }
 
@@ -81,7 +83,7 @@ class ExamSessionController extends Controller
         ]);
     }
 
-    public function submit(Request $request, $token)
+    public function submit(Request $request, $token, CertificateService $certificates)
     {
         $session = ExamSession::where('token', $token)->firstOrFail();
 
@@ -145,12 +147,24 @@ class ExamSessionController extends Controller
             'exam_result_id' => $examResult->id,
         ]);
 
+        $certificate = null;
+
+        if ($examResult->is_passed) {
+            try {
+                $certificate = $certificates->issue($examResult);
+            } catch (\Throwable $e) {
+                // Sertifikat yaratilmasa ham test natijasi saqlanib qolishi kerak.
+                report($e);
+            }
+        }
+
         return response()->json([
             'score_percent' => $scorePercent,
             'grade'         => $grade,
             'earned_points' => $earnedPoints,
             'total_points'  => $session->total_points,
             'results'       => $results,
+            'certificate'   => $certificate?->publicSummary(),
         ]);
     }
 
