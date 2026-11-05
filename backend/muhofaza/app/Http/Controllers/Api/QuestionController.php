@@ -10,10 +10,10 @@ class QuestionController extends Controller
 {
     public function index(Request $request)
     {
-        $request->validate(['exam_type_id' => 'required|exists:exam_types,id']);
+        $request->validate(['question_bank_id' => 'required|exists:question_banks,id']);
 
         return response()->json(
-            Question::where('exam_type_id', $request->exam_type_id)->orderBy('id')->get()
+            Question::where('question_bank_id', $request->question_bank_id)->orderBy('id')->get()
         );
     }
 
@@ -47,7 +47,7 @@ class QuestionController extends Controller
     private function validateData(Request $request): array
     {
         $data = $request->validate([
-            'exam_type_id'   => 'required|exists:exam_types,id',
+            'question_bank_id' => 'required|exists:question_banks,id',
             'question_text'  => 'required|string',
             'options'        => 'required|array|min:2',
             'options.*.key'  => 'required|string|size:1',

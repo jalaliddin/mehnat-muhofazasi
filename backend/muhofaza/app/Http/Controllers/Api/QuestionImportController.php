@@ -34,7 +34,7 @@ class QuestionImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'exam_type_id' => 'required|exists:exam_types,id',
+            'question_bank_id' => 'required|exists:question_banks,id',
             'file'         => 'required|file|mimes:xlsx,xls|max:5120',
         ]);
 
@@ -78,7 +78,7 @@ class QuestionImportController extends Controller
             }
 
             $toInsert[] = [
-                'exam_type_id'   => $request->exam_type_id,
+                'question_bank_id' => $request->question_bank_id,
                 'question_text'  => $questionText,
                 'options'        => json_encode($options),
                 'correct_option' => $correctOption,

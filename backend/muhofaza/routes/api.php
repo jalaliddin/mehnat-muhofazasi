@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PeriodicExamController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\Public\CertificateController as PublicCertificateController;
 use App\Http\Controllers\Api\Public\ExamSessionController as PublicExamSessionController;
+use App\Http\Controllers\Api\QuestionBankController;
 use App\Http\Controllers\Api\QuestionController;
 use App\Http\Controllers\Api\QuestionImportController;
 use App\Http\Controllers\Api\RetakeController;
@@ -80,11 +81,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/exam-types/calendar', [ExamTypeController::class, 'calendar']);
     Route::apiResource('exam-types', ExamTypeController::class);
 
-    // Questions (per exam type)
-    Route::get('/questions/template', [QuestionImportController::class, 'template']);
-    Route::post('/questions/import', [QuestionImportController::class, 'import']);
+    // Question banks & questions (o'qish — hamma, yozish — faqat admin)
+    Route::get('/question-banks', [QuestionBankController::class, 'index']);
+    Route::get('/question-banks/{id}', [QuestionBankController::class, 'show']);
     Route::get('/questions', [QuestionController::class, 'index']);
-    Route::apiResource('questions', QuestionController::class)->except(['index']);
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/question-banks', [QuestionBankController::class, 'store']);
+        Route::put('/question-banks/{id}', [QuestionBankController::class, 'update']);
+        Route::delete('/question-banks/{id}', [QuestionBankController::class, 'destroy']);
+        Route::get('/questions/template', [QuestionImportController::class, 'template']);
+        Route::post('/questions/import', [QuestionImportController::class, 'import']);
+        Route::post('/questions', [QuestionController::class, 'store']);
+        Route::put('/questions/{id}', [QuestionController::class, 'update']);
+        Route::delete('/questions/{id}', [QuestionController::class, 'destroy']);
+    });
 
     // Exam Sessions (online test links)
     Route::get('/exam-sessions', [ExamSessionController::class, 'index']);
