@@ -14,55 +14,88 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('question_banks', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
+        // Har bir qadam qayta ishga tushirishga chidamli: oldingi urinish yarim yo'lda yiqilgan bo'lsa,
+        // `migrate` qayta ishlaganda qolgan joyidan davom etadi (entrypoint `set -e` bilan ishlaydi).
+        if (! Schema::hasTable('question_banks')) {
+            Schema::create('question_banks', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->text('description')->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('exam_type_question_bank', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('exam_type_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('question_bank_id')->constrained()->restrictOnDelete();
-            $table->unsignedSmallInteger('question_count');
-            $table->timestamps();
+        if (! Schema::hasTable('exam_type_question_bank')) {
+            Schema::create('exam_type_question_bank', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('exam_type_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('question_bank_id')->constrained()->restrictOnDelete();
+                $table->unsignedSmallInteger('question_count');
+                $table->timestamps();
 
-            $table->unique(['exam_type_id', 'question_bank_id']);
-        });
+                $table->unique(['exam_type_id', 'question_bank_id']);
+            });
+        }
 
-        Schema::table('questions', function (Blueprint $table) {
-            $table->unsignedBigInteger('question_bank_id')->nullable()->after('id');
-        });
+        if (! Schema::hasColumn('questions', 'question_bank_id')) {
+            Schema::table('questions', function (Blueprint $table) {
+                $table->unsignedBigInteger('question_bank_id')->nullable()->after('id');
+            });
+        }
 
-        DB::transaction(function () {
-            $now = now();
-            $typeIds = DB::table('questions')->distinct()->orderBy('exam_type_id')->pluck('exam_type_id');
+        if (Schema::hasColumn('questions', 'exam_type_id')) {
+            DB::transaction(function () {
+                $now = now();
+                $typeIds = DB::table('questions')->whereNull('question_bank_id')
+                    ->distinct()->orderBy('exam_type_id')->pluck('exam_type_id');
 
-            foreach ($typeIds as $typeId) {
-                $name = DB::table('exam_types')->where('id', $typeId)->value('name');
-                if (DB::table('question_banks')->where('name', $name)->exists()) {
-                    $name = mb_substr($name, 0, 230)." (ID {$typeId})";
+                foreach ($typeIds as $typeId) {
+                    $name = $this->freeBankName((string) DB::table('exam_types')->where('id', $typeId)->value('name'), (int) $typeId);
+
+                    $bankId = DB::table('question_banks')->insertGetId([
+                        'name' => $name, 'created_at' => $now, 'updated_at' => $now,
+                    ]);
+                    $count = DB::table('questions')->where('exam_type_id', $typeId)->whereNull('question_bank_id')
+                        ->update(['question_bank_id' => $bankId]);
+
+                    DB::table('exam_type_question_bank')->insert([
+                        'exam_type_id' => $typeId, 'question_bank_id' => $bankId, 'question_count' => $count,
+                        'created_at' => $now, 'updated_at' => $now,
+                    ]);
                 }
+            });
+        }
 
-                $bankId = DB::table('question_banks')->insertGetId([
-                    'name' => $name, 'created_at' => $now, 'updated_at' => $now,
-                ]);
-                $count = DB::table('questions')->where('exam_type_id', $typeId)->update(['question_bank_id' => $bankId]);
+        $foreignKeys = collect(Schema::getForeignKeys('questions'))->pluck('name');
 
-                DB::table('exam_type_question_bank')->insert([
-                    'exam_type_id' => $typeId, 'question_bank_id' => $bankId, 'question_count' => $count,
-                    'created_at' => $now, 'updated_at' => $now,
-                ]);
+        Schema::table('questions', function (Blueprint $table) use ($foreignKeys) {
+            $table->unsignedBigInteger('question_bank_id')->nullable(false)->change();
+
+            if (! $foreignKeys->contains('questions_question_bank_id_foreign')) {
+                $table->foreign('question_bank_id')->references('id')->on('question_banks')->cascadeOnDelete();
+            }
+            if ($foreignKeys->contains('questions_exam_type_id_foreign')) {
+                $table->dropForeign(['exam_type_id']);
+            }
+            if (Schema::hasColumn('questions', 'exam_type_id')) {
+                $table->dropColumn('exam_type_id');
             }
         });
+    }
 
-        Schema::table('questions', function (Blueprint $table) {
-            $table->unsignedBigInteger('question_bank_id')->nullable(false)->change();
-            $table->foreign('question_bank_id')->references('id')->on('question_banks')->cascadeOnDelete();
-            $table->dropForeign(['exam_type_id']);
-            $table->dropColumn('exam_type_id');
-        });
+    /**
+     * Bo'sh nom topilguncha qo'shimcha qo'shadi: "Nom", "Nom (ID 7)", "Nom (ID 7-2)", ...
+     */
+    private function freeBankName(string $name, int $typeId): string
+    {
+        $candidate = $name;
+
+        for ($n = 1; DB::table('question_banks')->where('name', $candidate)->exists(); $n++) {
+            $suffix = $n === 1 ? " (ID {$typeId})" : " (ID {$typeId}-{$n})";
+            $candidate = mb_substr($name, 0, 255 - mb_strlen($suffix)).$suffix;
+        }
+
+        return $candidate;
     }
 
     /**

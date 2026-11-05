@@ -125,6 +125,7 @@ Savollar imtihon turidan mustaqil **bazalarda** saqlanadi (masalan, "Elektr xavf
 - Bazada savol yetmasa yoki tarkib bo'sh bo'lsa, test havolalari yaratilmaydi va sababi aniq aytiladi.
 - Bazalar, savollar va tarkibni faqat **admin** o'zgartiradi; operator faqat ko'radi. Testda ishlatilayotgan bazani o'chirib bo'lmaydi.
 - Yangilashda mavjud savollar avtomatik ravishda imtihon turi nomli bazaga ko'chadi va tarkibga "hamma savol" yoziladi — mavjud testlar avvalgidek ishlaydi.
+- **Bu versiyani deploy qilishdan oldin bazadan zaxira oling** (`docker compose exec mysql mysqldump -uroot -p muhofaza > backup.sql`). Migratsiya yarim yo'lda to'xtasa, `migrate` qayta ishga tushganda qolgan joyidan davom etadi.
 
 ## Testlar
 

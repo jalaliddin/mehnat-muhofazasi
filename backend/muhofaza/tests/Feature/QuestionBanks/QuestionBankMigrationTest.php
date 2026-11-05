@@ -79,4 +79,45 @@ class QuestionBankMigrationTest extends TestCase
 
         $this->migration->up(); // keyingi rollback uchun holatni tiklash
     }
+
+    public function test_up_resumes_after_previous_partial_run(): void
+    {
+        $a = $this->oldStyleType('Mehnat muhofazasi', 3);
+        // Oldingi urinish ma'lumot qadamida yiqilgandan keyingi holat: jadvallar va bo'sh ustun qolgan.
+        Schema::create('question_banks', function ($t) {
+            $t->id();
+            $t->string('name')->unique();
+            $t->text('description')->nullable();
+            $t->timestamps();
+        });
+        Schema::create('exam_type_question_bank', function ($t) {
+            $t->id();
+            $t->foreignId('exam_type_id')->constrained()->cascadeOnDelete();
+            $t->foreignId('question_bank_id')->constrained()->restrictOnDelete();
+            $t->unsignedSmallInteger('question_count');
+            $t->timestamps();
+            $t->unique(['exam_type_id', 'question_bank_id']);
+        });
+        Schema::table('questions', fn ($t) => $t->unsignedBigInteger('question_bank_id')->nullable()->after('id'));
+
+        $this->migration->up();
+
+        $this->assertSame(3, QuestionBank::where('name', 'Mehnat muhofazasi')->firstOrFail()->questions()->count());
+        $this->assertSame(3, ExamType::find($a)->questionBanks()->first()->pivot->question_count);
+        $this->assertFalse(Schema::hasColumn('questions', 'exam_type_id'));
+    }
+
+    public function test_up_keeps_suffixing_until_name_is_free(): void
+    {
+        $first = $this->oldStyleType('A', 1);
+        $second = $this->oldStyleType('placeholder', 1);
+        $third = $this->oldStyleType('A', 1);
+        DB::table('exam_types')->where('id', $second)->update(['name' => "A (ID {$third})"]);
+
+        $this->migration->up();
+
+        $this->assertSame(3, QuestionBank::count());
+        $this->assertSame(3, QuestionBank::pluck('name')->unique()->count());
+        $this->assertSame(1, ExamType::find($third)->questionBanks()->first()->questions()->count());
+    }
 }
