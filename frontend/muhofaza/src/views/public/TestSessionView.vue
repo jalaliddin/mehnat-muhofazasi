@@ -27,6 +27,24 @@
         <v-icon icon="mdi-check-circle" color="success" size="64" class="mb-4" />
         <div class="text-h5 font-weight-bold mb-2" style="color: #0D1B2A">Test allaqachon topshirilgan</div>
         <div class="text-h4 font-weight-bold mb-2" style="color: #2e7d32">{{ session.score_percent }}%</div>
+        <template v-if="session.certificate">
+          <v-btn
+            v-if="session.certificate.status === 'signed'"
+            :href="certificateDownloadUrl(session.certificate)"
+            target="_blank"
+            color="primary"
+            size="large"
+            rounded="lg"
+            prepend-icon="mdi-download"
+            block
+            class="mt-4 text-none"
+          >
+            Sertifikatni yuklab olish
+          </v-btn>
+          <v-alert v-else type="info" variant="tonal" density="compact" rounded="lg" class="mt-4 text-left">
+            Sertifikat № {{ session.certificate.number }} — imzo kutilmoqda
+          </v-alert>
+        </template>
       </v-card>
 
       <!-- Expired without submission -->
@@ -70,6 +88,9 @@
         <div class="text-h4 font-weight-bold mb-2">{{ result.score_percent }}%</div>
         <div class="text-body-1 mb-4" style="color: #888">{{ result.earned_points }} / {{ result.total_points }} ball</div>
         <v-chip :color="gradeColor(result.grade)" size="large" label>{{ gradeText(result.grade) }}</v-chip>
+        <v-alert v-if="result.certificate" type="success" variant="tonal" rounded="lg" class="mt-6 text-left">
+          Sertifikatingiz yaratildi (№ {{ result.certificate.number }}). Mas'ul shaxslar imzolagandan so'ng shu havolada yuklab olishingiz mumkin.
+        </v-alert>
       </v-card>
     </div>
   </div>
@@ -87,6 +108,10 @@ const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   headers: { Accept: 'application/json' },
 })
+
+function certificateDownloadUrl(certificate) {
+  return `${publicApi.defaults.baseURL}/public/certificates/${certificate.public_code}/download`
+}
 
 const loading = ref(true)
 const loadError = ref('')
