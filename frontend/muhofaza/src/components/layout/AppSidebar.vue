@@ -47,6 +47,7 @@
         <NavItem icon="mdi-shape" label="Imtihon Turlari" path="/exams/types" :rail="rail" :indent="!rail" />
         <NavItem icon="mdi-help-circle-outline" label="Savollar" path="/exams/questions" :rail="rail" :indent="!rail" />
         <NavItem icon="mdi-refresh" label="Qayta Topshirish" path="/exams/retakes" :rail="rail" :indent="!rail" :badge="retakesCount" />
+        <NavItem icon="mdi-certificate" label="Sertifikatlar" path="/certificates" :rail="rail" :indent="!rail" />
       </NavGroup>
 
       <div class="my-1" style="border-bottom: 1px solid rgba(255,255,255,0.08)" />

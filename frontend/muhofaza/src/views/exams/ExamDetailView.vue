@@ -81,10 +81,23 @@
         <v-icon icon="mdi-clipboard-list" color="primary" class="mr-2" />
         <span style="color: #0D1B2A">Natijalar</span>
         <v-spacer />
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-certificate" rounded="lg" size="small" class="mr-2"
+          :loading="generatingCertificates" @click="generateCertificates">
+          Sertifikat yaratish
+        </v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-printer" rounded="lg" size="small" class="mr-2"
+          :loading="printingCertificates" @click="printCertificates">
+          Imzolash uchun chop etish (PDF)
+        </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" size="small" @click="openAddResult">
           Natija qo'shish
         </v-btn>
       </v-card-title>
+      <v-alert v-if="certificateWarnings.length" type="warning" variant="tonal" density="compact" class="mx-4 mb-3" closable
+        @click:close="certificateWarnings = []">
+        <div class="font-weight-medium mb-1">Sertifikatlarda ba'zi ma'lumotlar bo'sh qoldi:</div>
+        <div v-for="w in certificateWarnings" :key="w">• {{ w }}</div>
+      </v-alert>
       <v-divider />
       <v-data-table
         :headers="resultHeaders"
@@ -102,6 +115,13 @@
         </template>
         <template #item.retake_required="{ item }">
           <v-icon :icon="item.retake_required ? 'mdi-check-circle' : 'mdi-minus-circle'" :color="item.retake_required ? 'error' : 'grey'" size="small" />
+        </template>
+        <template #item.certificate="{ item }">
+          <v-chip v-if="item.certificate" size="small" label :color="item.certificate.status === 'signed' ? 'success' : 'warning'"
+            @click="router.push(`/certificates?periodic_exam_id=${route.params.id}`)">
+            № {{ item.certificate.number }} · {{ item.certificate.status === 'signed' ? 'Imzolangan' : 'Imzo kutilmoqda' }}
+          </v-chip>
+          <span v-else style="color: #999">—</span>
         </template>
         <template #item.actions="{ item }">
           <v-btn icon="mdi-pencil" variant="text" size="small" color="warning" @click="openEditResult(item)" />
@@ -188,17 +208,27 @@
       message="Ushbu natijani o'chirmoqchimisiz?"
       @confirm="deleteResult"
     />
+
+    <v-snackbar v-model="certSnackbar" :color="certSnackbarColor" timeout="5000">{{ certSnackbarText }}</v-snackbar>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
+import { downloadFile } from '../../services/download'
 import GradeBadge from '../../components/common/GradeBadge.vue'
 import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
 
 const route = useRoute()
+const router = useRouter()
+const generatingCertificates = ref(false)
+const printingCertificates = ref(false)
+const certificateWarnings = ref([])
+const certSnackbar = ref(false)
+const certSnackbarText = ref('')
+const certSnackbarColor = ref('success')
 const exam = ref(null)
 const results = ref([])
 const availableEmployees = ref([])
@@ -236,8 +266,39 @@ const resultHeaders = [
   { title: 'O\'tdi', key: 'is_passed', sortable: false },
   { title: 'Qayta topshirish', key: 'retake_required', sortable: false },
   { title: 'Izoh', key: 'notes', sortable: false },
+  { title: 'Sertifikat', key: 'certificate', sortable: false },
   { title: 'Amallar', key: 'actions', sortable: false, align: 'end' },
 ]
+
+function certNotify(text, color = 'success') {
+  certSnackbarText.value = text
+  certSnackbarColor.value = color
+  certSnackbar.value = true
+}
+
+async function generateCertificates() {
+  generatingCertificates.value = true
+  try {
+    const res = await api.post('/certificates/generate', { periodic_exam_id: Number(route.params.id) })
+    const { created, regenerated, skipped_signed, warnings } = res.data
+    certNotify(`Yaratildi: ${created}, yangilandi: ${regenerated}, imzolangan (o'zgarmadi): ${skipped_signed}`)
+    certificateWarnings.value = warnings || []
+    await fetchResults()
+  } catch (e) {
+    certNotify(e.response?.data?.message || "Sertifikat yaratib bo'lmadi", 'error')
+  }
+  generatingCertificates.value = false
+}
+
+async function printCertificates() {
+  printingCertificates.value = true
+  try {
+    await downloadFile('/certificates/print', { periodic_exam_id: Number(route.params.id) }, `sertifikatlar-${route.params.id}.pdf`)
+  } catch (e) {
+    certNotify(e.message, 'error')
+  }
+  printingCertificates.value = false
+}
 
 const defaultResultForm = () => ({
   employee_id: null,
