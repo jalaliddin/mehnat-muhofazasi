@@ -64,6 +64,7 @@
       <template v-if="authStore.isAdmin">
         <div class="my-1" style="border-bottom: 1px solid rgba(255,255,255,0.08)" />
         <NavItem icon="mdi-account-cog" label="Foydalanuvchilar" path="/settings/users" :rail="rail" />
+        <NavItem icon="mdi-certificate-outline" label="Sertifikat sozlamalari" path="/settings/certificate" :rail="rail" />
       </template>
     </div>
 

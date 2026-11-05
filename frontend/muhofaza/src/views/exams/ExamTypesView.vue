@@ -131,6 +131,26 @@
               suffix="oy"
               class="mb-3"
             />
+            <v-text-field
+              v-model="form.program_name"
+              label="Dastur nomi (sertifikat uchun)"
+              placeholder="Mehnatni muhofaza qilish"
+              hint="Bo'sh bo'lsa imtihon turi nomi ishlatiladi"
+              persistent-hint
+              variant="outlined"
+              rounded="lg"
+              class="mb-3"
+            />
+            <v-text-field
+              v-model.number="form.training_hours"
+              label="Soat hajmi (sertifikat uchun)"
+              type="number"
+              min="1"
+              variant="outlined"
+              rounded="lg"
+              suffix="soat"
+              class="mb-3"
+            />
             <v-select
               v-model="form.exam_month"
               :items="months"
@@ -205,7 +225,7 @@ const months = [
   { title: 'Noyabr', value: 11 }, { title: 'Dekabr', value: 12 },
 ]
 
-const defaultForm = () => ({ name: '', description: '', frequency_months: 12, exam_month: null, exam_month_note: '' })
+const defaultForm = () => ({ name: '', description: '', frequency_months: 12, exam_month: null, exam_month_note: '', program_name: '', training_hours: null })
 const form = ref(defaultForm())
 
 const headers = [
@@ -240,6 +260,8 @@ function openEdit(item) {
     frequency_months: Number(item.frequency_months),
     exam_month: item.exam_month || null,
     exam_month_note: item.exam_month_note || '',
+    program_name: item.program_name || '',
+    training_hours: item.training_hours || null,
   }
   dialog.value = true
 }
@@ -274,6 +296,7 @@ async function save() {
   try {
     const payload = { ...form.value }
     if (!payload.exam_month) { payload.exam_month = null; payload.exam_month_note = null }
+    if (!payload.training_hours) payload.training_hours = null
     if (editItem.value) {
       await api.put(`/exam-types/${editItem.value.id}`, payload)
     } else {

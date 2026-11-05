@@ -181,6 +181,27 @@
                   bg-color="#f5f5f5"
                 />
               </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="form.course_start_date"
+                  label="Kurs boshlanishi"
+                  type="date"
+                  variant="outlined"
+                  rounded="lg"
+                  hint="Sertifikatda ko'rsatiladi"
+                  persistent-hint
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="form.course_end_date"
+                  label="Kurs tugashi"
+                  type="date"
+                  variant="outlined"
+                  rounded="lg"
+                  :rules="[v => !v || !form.course_start_date || v >= form.course_start_date || 'Boshlanish sanasidan oldin bo\'lmasin']"
+                />
+              </v-col>
               <v-col cols="12">
                 <v-select
                   v-model="form.status"
@@ -299,6 +320,8 @@ const defaultForm = () => ({
   status: 'planned',
   notes: '',
   employee_ids: [],
+  course_start_date: '',
+  course_end_date: '',
 })
 
 const form = ref(defaultForm())
@@ -404,6 +427,8 @@ function openEdit(item) {
     status: item.status,
     notes: item.notes || '',
     employee_ids: item.employees?.map(e => e.id) || [],
+    course_start_date: item.course_start_date?.slice(0, 10) || '',
+    course_end_date: item.course_end_date?.slice(0, 10) || '',
   }
   calcNextDate()
   onDialogOrgChange(item.organization_id)

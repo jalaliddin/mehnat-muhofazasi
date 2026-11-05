@@ -26,6 +26,7 @@ const routes = [
       { path: 'notifications', component: () => import('../views/notifications/NotificationsView.vue') },
       { path: 'reports', component: () => import('../views/reports/ReportsView.vue') },
       { path: 'settings/users', component: () => import('../views/settings/UsersView.vue') },
+      { path: 'settings/certificate', component: () => import('../views/settings/CertificateSettingsView.vue') },
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/' }
