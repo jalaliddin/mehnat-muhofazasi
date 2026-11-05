@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PeriodicExamController;
 use App\Http\Controllers\Api\PositionController;
+use App\Http\Controllers\Api\Public\CertificateController as PublicCertificateController;
 use App\Http\Controllers\Api\Public\ExamSessionController as PublicExamSessionController;
 use App\Http\Controllers\Api\QuestionController;
 use App\Http\Controllers\Api\QuestionImportController;
@@ -27,6 +28,12 @@ Route::prefix('public/exam-sessions')->group(function () {
     Route::get('/{token}', [PublicExamSessionController::class, 'show']);
     Route::post('/{token}/start', [PublicExamSessionController::class, 'start']);
     Route::post('/{token}/submit', [PublicExamSessionController::class, 'submit']);
+});
+
+// Public certificate verification (QR code), no auth
+Route::prefix('public/certificates')->group(function () {
+    Route::get('/{code}', [PublicCertificateController::class, 'show']);
+    Route::get('/{code}/download', [PublicCertificateController::class, 'download']);
 });
 
 // Auth routes
