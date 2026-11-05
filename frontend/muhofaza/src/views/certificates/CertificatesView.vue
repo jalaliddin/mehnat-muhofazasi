@@ -147,6 +147,9 @@ const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+const TOO_LARGE_MESSAGE = 'Fayl 10 MB dan katta'
+
 const statusOptions = [
   { label: 'Imzo kutilmoqda', value: 'pending_signature' },
   { label: 'Imzolangan', value: 'signed' },
@@ -232,6 +235,10 @@ async function uploadSigned(event) {
   const file = event.target.files?.[0]
   const item = uploadTarget.value
   if (!file || !item) return
+  if (file.size > MAX_UPLOAD_BYTES) {
+    notify(TOO_LARGE_MESSAGE, 'error')
+    return
+  }
   busy.value = `upload-${item.id}`
   try {
     const formData = new FormData()
@@ -241,7 +248,8 @@ async function uploadSigned(event) {
     await fetchItems()
   } catch (e) {
     const errors = e.response?.data?.errors?.file
-    notify(errors?.[0] || e.response?.data?.message || "Faylni yuklab bo'lmadi", 'error')
+    const message = e.response?.status === 413 ? TOO_LARGE_MESSAGE : errors?.[0] || e.response?.data?.message
+    notify(message || "Faylni yuklab bo'lmadi", 'error')
   }
   busy.value = ''
 }

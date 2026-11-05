@@ -22,6 +22,9 @@ RUN docker-php-ext-install \
     gd \
     zip
 
+# PHP limits (signed certificate uploads up to 10 MB, batch PDF rendering)
+COPY docker/php/certificates.ini /usr/local/etc/php/conf.d/zz-certificates.ini
+
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
