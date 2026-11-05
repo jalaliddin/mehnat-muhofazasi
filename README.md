@@ -86,6 +86,38 @@ docker compose exec app php artisan db:seed
 
 ---
 
+## Sertifikatlar
+
+Testdan o'tgan o'quvchiga tizim "Mehnatni muhofaza qilish sohasida malaka oshirganlik haqida" sertifikatini PDF ko'rinishida, QR kod bilan yaratadi.
+
+**Jarayon:**
+
+1. O'quvchi onlayn testdan o'tadi (baho "qoniqarsiz" emas) va sertifikat avtomatik yaratiladi. Qo'lda kiritilgan natijalar uchun imtihon sahifasidagi **"Sertifikat yaratish"** tugmasi ishlatiladi.
+2. Admin yoki operator **"Imzolash uchun chop etish (PDF)"** yoki **Sertifikatlar** sahifasidan PDF ni yuklab oladi, chop etadi va mas'ul shaxslarga imzo qo'ydirib, muhr bostiradi.
+3. Skanerlangan imzoli nusxa (PDF/JPG/PNG, 10 MB gacha) **Sertifikatlar** sahifasida ⬆️ tugmasi orqali yuklanadi.
+4. O'quvchi test havolasini qayta ochib sertifikatni yuklab oladi. QR kod `https://mehnatmuhofazasi.uz/sertifikat/{kod}` tekshirish sahifasini ochadi va u yerdan imzoli nusxani yuklab olish mumkin.
+
+**Birinchi deploydan keyin to'ldiring:**
+
+- **Sertifikat sozlamalari** (faqat admin): ta'lim muassasasi nomi, 3 imzolovchining F.I.O., shahar.
+- **Imtihon turlari:** "Dastur nomi" va "Soat hajmi".
+- **Davriy imtihonlar:** "Kurs boshlanishi" va "Kurs tugashi".
+
+To'ldirilmagan maydonlar sertifikatda `____` bo'lib chiqadi. To'ldirgandan keyin imzolanmagan sertifikatlarni "Sertifikat yaratish" tugmasi bilan qayta yaratish mumkin (raqam va QR o'zgarmaydi).
+
+> **Muhim:** QR havolasi `APP_URL` dan olinadi. Productionda `backend/muhofaza/.env.docker` ichida `APP_URL=https://mehnatmuhofazasi.uz` bo'lishi shart. Fayllar `storage/app/private/certificates/` da saqlanadi (Docker'da `app_storage` volume).
+
+## Testlar
+
+Backend testlari alohida `muhofaza_test` MySQL bazasida ishlaydi (ishchi bazaga tegmaydi):
+
+```bash
+mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS muhofaza_test"
+cd backend/muhofaza && php artisan test
+```
+
+---
+
 ## Foydali buyruqlar
 
 ### Loglarni ko'rish
