@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CertificateController;
+use App\Http\Controllers\Api\CertificateSettingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -91,6 +92,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/certificates/{id}/download', [CertificateController::class, 'download']);
     Route::post('/certificates/{id}/signed', [CertificateController::class, 'uploadSigned']);
     Route::delete('/certificates/{id}', [CertificateController::class, 'destroy']);
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/certificate-settings', [CertificateSettingController::class, 'show']);
+        Route::put('/certificate-settings', [CertificateSettingController::class, 'update']);
+    });
 
     // Reports
     Route::prefix('reports')->group(function () {

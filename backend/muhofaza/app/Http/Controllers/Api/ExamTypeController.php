@@ -33,6 +33,8 @@ class ExamTypeController extends Controller
             'frequency_months' => 'required|integer|min:1',
             'exam_month'       => 'nullable|integer|min:1|max:12',
             'exam_month_note'  => 'nullable|string|max:255',
+            'program_name'     => 'nullable|string|max:255',
+            'training_hours'   => 'nullable|integer|min:1|max:2000',
         ]);
 
         $examType = ExamType::create($data);
@@ -54,6 +56,8 @@ class ExamTypeController extends Controller
             'exam_month_note'  => 'nullable|string|max:255',
             'duration_minutes' => 'sometimes|integer|min:1|max:600',
             'passing_score'    => 'sometimes|integer|min:1|max:100',
+            'program_name'     => 'nullable|string|max:255',
+            'training_hours'   => 'nullable|integer|min:1|max:2000',
         ]);
 
         $examType->update($data);

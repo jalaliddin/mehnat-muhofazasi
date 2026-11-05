@@ -11,7 +11,7 @@ class ExamResultController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = ExamResult::with(['periodicExam.organization', 'employee', 'order']);
+        $query = ExamResult::with(['periodicExam.organization', 'employee', 'order', 'certificate']);
 
         if ($user->role === 'operator' && $user->organization_id) {
             $query->whereHas('periodicExam', fn($q) => $q->where('organization_id', $user->organization_id));

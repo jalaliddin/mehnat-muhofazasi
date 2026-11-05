@@ -50,6 +50,7 @@ class PeriodicExamController extends Controller
             'exam_date'       => 'required|date',
             'frequency_months' => 'required|integer|min:1',
             'status'           => 'nullable|in:planned,in_progress,completed',
+            ...$this->courseDateRules($request->input('course_start_date')),
         ]);
 
         $examDate = Carbon::parse($data['exam_date']);
@@ -74,6 +75,11 @@ class PeriodicExamController extends Controller
             'exam_date'       => 'sometimes|date',
             'frequency_months' => 'sometimes|integer|min:1',
             'status'           => 'sometimes|in:planned,in_progress,completed',
+            ...$this->courseDateRules(
+                $request->exists('course_start_date')
+                    ? $request->input('course_start_date')
+                    : $exam->course_start_date?->toDateString()
+            ),
         ]);
 
         if (isset($data['exam_date']) || isset($data['frequency_months'])) {
@@ -115,5 +121,23 @@ class PeriodicExamController extends Controller
         $exam = PeriodicExam::with('employees.department', 'employees.position')->findOrFail($id);
 
         return response()->json($exam->employees);
+    }
+
+    /**
+     * Kurs tugash sanasi boshlanish sanasidan oldin bo'lmasligi kerak. Boshlanish sanasi so'rovda
+     * bo'lmasa (faqat tugash sanasi yangilansa), bazadagi qiymat bilan solishtiriladi.
+     */
+    private function courseDateRules(?string $start): array
+    {
+        $endRules = ['nullable', 'date'];
+
+        if ($start && strtotime($start) !== false) {
+            $endRules[] = 'after_or_equal:'.$start;
+        }
+
+        return [
+            'course_start_date' => 'nullable|date',
+            'course_end_date'   => $endRules,
+        ];
     }
 }
