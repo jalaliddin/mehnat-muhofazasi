@@ -9,11 +9,14 @@ class PeriodicExam extends Model
     protected $fillable = [
         'organization_id', 'exam_type_id', 'order_id', 'title',
         'exam_date', 'frequency_months', 'next_exam_date', 'status', 'created_by',
+        'course_start_date', 'course_end_date',
     ];
 
     protected $casts = [
         'exam_date'      => 'date',
         'next_exam_date' => 'date',
+        'course_start_date' => 'date',
+        'course_end_date'   => 'date',
     ];
 
     public function organization()

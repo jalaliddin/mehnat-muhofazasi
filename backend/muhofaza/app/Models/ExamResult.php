@@ -16,9 +16,21 @@ class ExamResult extends Model
         'retake_required' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (ExamResult $result) {
+            $result->certificate?->delete();
+        });
+    }
+
     public function periodicExam()
     {
         return $this->belongsTo(PeriodicExam::class);
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class);
     }
 
     public function employee()
