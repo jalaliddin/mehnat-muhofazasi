@@ -43,10 +43,14 @@
             </v-chip>
             <span v-else class="text-caption" style="color: #bbb">—</span>
           </template>
+          <template #item.question_total="{ item }">
+            <v-chip v-if="item.question_total" size="small" color="primary" variant="tonal">{{ item.question_total }} ta savol</v-chip>
+            <span v-else class="text-caption" style="color: #999">Tarkib yo'q</span>
+          </template>
           <template #item.actions="{ item }">
-            <v-btn icon="mdi-help-circle-outline" variant="text" size="small" color="secondary" @click="$router.push(`/exams/types/${item.id}/questions`)">
-              <v-icon icon="mdi-help-circle-outline" />
-              <v-tooltip activator="parent" location="top">Savollar</v-tooltip>
+            <v-btn icon="mdi-format-list-checks" variant="text" size="small" color="secondary" @click="compositionRef.open(item)">
+              <v-icon icon="mdi-format-list-checks" />
+              <v-tooltip activator="parent" location="top">Test tarkibi</v-tooltip>
             </v-btn>
             <v-btn icon="mdi-pencil" variant="text" size="small" color="primary" @click="openEdit(item)" />
             <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click="openDelete(item)" />
@@ -189,6 +193,8 @@
       </v-card>
     </v-dialog>
 
+    <TestCompositionDialog ref="compositionRef" @saved="fetchTypes" />
+
     <ConfirmDialog
       ref="confirmRef"
       title="Turni o'chirish"
@@ -202,6 +208,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import api from '../../services/api'
 import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
+import TestCompositionDialog from '../../components/exams/TestCompositionDialog.vue'
 
 const types = ref([])
 const calendar = ref({})
@@ -215,6 +222,7 @@ const search = ref('')
 const tab = ref('table')
 const formRef = ref(null)
 const confirmRef = ref(null)
+const compositionRef = ref(null)
 
 const months = [
   { title: 'Yanvar', value: 1 }, { title: 'Fevral', value: 2 },
@@ -232,6 +240,7 @@ const headers = [
   { title: 'Nomi', key: 'name' },
   { title: 'Chastota (oy)', key: 'frequency_years' },
   { title: 'Belgilangan Oy', key: 'exam_month_name', sortable: false },
+  { title: 'Savollar', key: 'question_total', sortable: false },
   { title: 'Tavsif', key: 'description', sortable: false },
   { title: 'Amallar', key: 'actions', sortable: false, align: 'end' },
 ]
