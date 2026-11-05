@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\ExamSessionController;
 use App\Http\Controllers\Api\ExamTypeController;
+use App\Http\Controllers\Api\ExamTypeQuestionBankController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrganizationController;
@@ -79,6 +80,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Exam Types
     Route::get('/exam-types/by-month', [ExamTypeController::class, 'byMonth']);
     Route::get('/exam-types/calendar', [ExamTypeController::class, 'calendar']);
+    Route::get('/exam-types/{id}/question-banks', [ExamTypeQuestionBankController::class, 'show']);
+    Route::put('/exam-types/{id}/question-banks', [ExamTypeQuestionBankController::class, 'update'])->middleware('role:admin');
     Route::apiResource('exam-types', ExamTypeController::class);
 
     // Question banks & questions (o'qish — hamma, yozish — faqat admin)
