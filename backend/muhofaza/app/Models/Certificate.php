@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,6 +40,18 @@ class Certificate extends Model
     public function registrationLabel(): string
     {
         return str_pad((string) $this->registration_number, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Operator faqat o'z tashkiloti imtihonlariga tegishli sertifikatlarni ko'radi.
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->role === 'operator' && $user->organization_id) {
+            $query->whereHas('periodicExam', fn ($q) => $q->where('organization_id', $user->organization_id));
+        }
+
+        return $query;
     }
 
     /**

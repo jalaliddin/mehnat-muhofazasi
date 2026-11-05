@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -81,6 +82,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/exam-sessions', [ExamSessionController::class, 'index']);
     Route::post('/exam-sessions/generate', [ExamSessionController::class, 'generate']);
     Route::delete('/exam-sessions/{id}', [ExamSessionController::class, 'destroy']);
+
+    // Certificates
+    Route::get('/certificates', [CertificateController::class, 'index']);
+    Route::post('/certificates/generate', [CertificateController::class, 'generate']);
+    Route::get('/certificates/print', [CertificateController::class, 'print']);
+    Route::post('/certificates/{id}/regenerate', [CertificateController::class, 'regenerate']);
 
     // Reports
     Route::prefix('reports')->group(function () {
