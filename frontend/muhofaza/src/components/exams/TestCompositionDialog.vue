@@ -12,6 +12,10 @@
           <v-progress-circular indeterminate color="primary" />
         </div>
 
+        <v-alert v-else-if="loadFailed" type="error" variant="tonal" density="compact">
+          {{ error }} Oynani yopib, qayta oching.
+        </v-alert>
+
         <template v-else>
           <v-row dense>
             <v-col cols="12" sm="6">
@@ -111,7 +115,7 @@
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="text" @click="dialog = false">{{ isAdmin ? 'Bekor qilish' : 'Yopish' }}</v-btn>
-        <v-btn v-if="isAdmin" color="primary" variant="flat" rounded="lg" :loading="saving" @click="save">Saqlash</v-btn>
+        <v-btn v-if="isAdmin && !loading && !loadFailed" color="primary" variant="flat" rounded="lg" :loading="saving" @click="save">Saqlash</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -128,6 +132,8 @@ const isAdmin = computed(() => authStore.isAdmin)
 
 const dialog = ref(false)
 const loading = ref(false)
+// Yuklash yiqilsa saqlash bloklanadi — aks holda bo'sh ro'yxat saqlanib, tarkib o'chib ketardi.
+const loadFailed = ref(false)
 const saving = ref(false)
 const error = ref('')
 const type = ref(null)
@@ -136,6 +142,8 @@ const rows = ref([])
 const settings = ref({ duration_minutes: 30, passing_score: 60 })
 
 let rowKey = 0
+// Oyna tez-tez ochilsa, eski so'rov javobi boshqa turning oynasini to'ldirib yubormasligi uchun.
+let requestId = 0
 const DEFAULT_COUNT = 10
 
 const total = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.question_count) || 0), 0))
@@ -168,13 +176,16 @@ async function open(examType) {
   }
   error.value = ''
   rows.value = []
+  loadFailed.value = false
   dialog.value = true
   loading.value = true
+  const current = ++requestId
   try {
     const [banksRes, compositionRes] = await Promise.all([
       api.get('/question-banks'),
       api.get(`/exam-types/${examType.id}/question-banks`),
     ])
+    if (current !== requestId) return
     banks.value = banksRes.data
     rows.value = compositionRes.data.map(r => ({
       key: ++rowKey,
@@ -182,12 +193,15 @@ async function open(examType) {
       question_count: r.question_count,
     }))
   } catch (e) {
-    error.value = "Tarkibni yuklab bo'lmadi"
+    if (current !== requestId) return
+    loadFailed.value = true
+    error.value = "Tarkibni yuklab bo'lmadi."
   }
   loading.value = false
 }
 
 async function save() {
+  if (loading.value || loadFailed.value) return
   error.value = ''
   const invalid = rows.value.some(r => !r.question_bank_id || !(r.question_count >= 1 && r.question_count <= 500))
   if (invalid) {
