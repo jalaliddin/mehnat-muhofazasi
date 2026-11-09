@@ -72,8 +72,16 @@
           class="pa-6 mb-4"
         >
           <div class="font-weight-bold mb-3" style="color: #0D1B2A">{{ idx + 1 }}. {{ q.question_text }}</div>
-          <v-radio-group v-model="answers[q.exam_session_question_id]" hide-details>
-            <v-radio v-for="opt in q.options" :key="opt.key" :value="opt.key" :label="`${opt.key}. ${opt.text}`" />
+          <v-radio-group v-model="answers[q.exam_session_question_id]" hide-details class="answer-group">
+            <v-radio
+              v-for="opt in q.options"
+              :key="opt.key"
+              :value="opt.key"
+              :label="opt.text"
+              color="primary"
+              class="answer-option"
+              :class="{ selected: answers[q.exam_session_question_id] === opt.key }"
+            />
           </v-radio-group>
         </v-card>
 
@@ -205,3 +213,34 @@ async function submitTest(auto) {
 onMounted(fetchSession)
 onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>
+
+<style scoped>
+/* Har bir javob — alohida, keng, butun qatori bosiladigan blok (telefonda ham qulay). */
+.answer-group :deep(.v-selection-control-group) {
+  gap: 10px;
+}
+.answer-option {
+  border: 1px solid #dfe3ea;
+  border-radius: 12px;
+  min-height: 52px;
+  padding: 4px 12px 4px 4px;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.answer-option:hover {
+  border-color: #b8c2d3;
+}
+.answer-option.selected {
+  border-color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.06);
+}
+.answer-option :deep(.v-label) {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0;
+  opacity: 1;
+  white-space: normal;
+  line-height: 1.4;
+  color: #0D1B2A;
+  cursor: pointer;
+}
+</style>
