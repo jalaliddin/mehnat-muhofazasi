@@ -213,4 +213,43 @@ class CertificateNumberTest extends TestCase
 
         $this->getJson('/api/certificates?per_page=500')->assertOk()->assertJsonPath('per_page', 500);
     }
+
+    public function test_upload_signed_requires_number(): void
+    {
+        $cert = $this->issued();
+        Sanctum::actingAs($this->makeUser());
+
+        $this->post("/api/certificates/{$cert->id}/signed", ['file' => \Illuminate\Http\UploadedFile::fake()->image('scan.png')], ['Accept' => 'application/json'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Avval sertifikat raqamini kiriting');
+
+        $this->assertNull($cert->fresh()->signed_path);
+    }
+
+    public function test_set_number_renders_with_current_exam_settings(): void
+    {
+        $exam = $this->makeExam(null, ['certificate_type_id' => null]);
+        $cert = app(CertificateService::class)->issue($this->makeResult($exam));
+        $exam->update(['certificate_type_id' => $this->makeCertificateType('288 soatlik qayta tayyorlov', 288,
+            "Mehnatni muhofaza qilish sohasida qayta tayyorlovdan o'tganlik haqida", 'qayta tayyorlov kursida')->id]);
+        Sanctum::actingAs($this->makeUser());
+
+        $this->putJson("/api/certificates/{$cert->id}/number", ['number' => '0451'])->assertOk();
+
+        $this->assertSame('qayta tayyorlov kursida', $cert->fresh()->data['course_text']);
+        $this->assertSame(288, $cert->fresh()->data['training_hours']);
+    }
+
+    public function test_bulk_numbers_render_with_current_exam_settings(): void
+    {
+        $exam = $this->makeExam(null, ['certificate_type_id' => null]);
+        $cert = app(CertificateService::class)->issue($this->makeResult($exam));
+        $exam->update(['certificate_type_id' => $this->makeCertificateType("36 soatlik o'qish", 36,
+            "Mehnatni muhofaza qilish sohasida o'qiganlik haqida", "o'quv kursida")->id]);
+        Sanctum::actingAs($this->makeUser());
+
+        $this->putJson('/api/certificates/numbers', ['items' => [['id' => $cert->id, 'number' => '0452']]])->assertOk();
+
+        $this->assertSame("o'quv kursida", $cert->fresh()->data['course_text']);
+    }
 }

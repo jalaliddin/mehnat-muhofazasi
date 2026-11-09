@@ -211,6 +211,11 @@ class CertificateController extends Controller
         $certificate = Certificate::with('periodicExam')->findOrFail($id);
         $this->authorizeExam($request->user(), $certificate->periodicExam);
 
+        // Raqamsiz sertifikatga imzoli nusxa yuklansa, u abadiy qulflanib qoladi (raqamni o'zgartirib bo'lmaydi).
+        if (! $certificate->number) {
+            return response()->json(['message' => 'Avval sertifikat raqamini kiriting'], 422);
+        }
+
         $data = $request->validate([
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);

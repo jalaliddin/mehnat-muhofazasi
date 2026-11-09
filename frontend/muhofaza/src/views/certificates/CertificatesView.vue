@@ -90,7 +90,7 @@
           <div class="d-flex justify-end">
             <v-btn icon="mdi-file-pdf-box" variant="text" size="small" color="primary" title="PDF yuklab olish (imzolanmagan)"
               :loading="busy === `pdf-${item.id}`" @click="downloadGenerated(item)" />
-            <v-btn icon="mdi-upload" variant="text" size="small" color="success" title="Imzoli nusxani yuklash"
+            <v-btn icon="mdi-upload" variant="text" size="small" color="success" :title="item.number ? 'Imzoli nusxani yuklash' : 'Avval sertifikat raqamini kiriting'" :disabled="!item.number"
               :loading="busy === `upload-${item.id}`" @click="pickFile(item)" />
             <v-btn v-if="item.status === 'signed'" icon="mdi-eye" variant="text" size="small" color="info" title="Imzoli nusxani ko'rish"
               @click="viewSigned(item)" />

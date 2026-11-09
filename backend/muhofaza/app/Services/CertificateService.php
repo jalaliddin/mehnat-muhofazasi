@@ -91,6 +91,7 @@ class CertificateService
             throw new CertificateException('Bu raqam boshqa sertifikatga berilgan');
         }
 
+        $this->refreshData($certificate);
         $this->renderPdf($certificate);
 
         return $certificate;
@@ -129,8 +130,19 @@ class CertificateService
         }
 
         foreach ($items as $item) {
+            $this->refreshData($item['certificate']);
             $this->renderPdf($item['certificate']);
         }
+    }
+
+    /**
+     * Raqam berilayotganda PDF davriy imtihonning hozirgi sozlamalari (sertifikat turi, kurs sanalari va h.k.)
+     * bilan chizilishi uchun ma'lumot surati yangilanadi — sertifikat test paytida, tur tanlanmasdan oldin
+     * yaratilgan bo'lishi mumkin. Faqat imzolanmagan sertifikatlar uchun chaqiriladi.
+     */
+    private function refreshData(Certificate $certificate): void
+    {
+        $certificate->update(['data' => $this->buildData($certificate->examResult()->firstOrFail())]);
     }
 
     private function hasFreshPdf(Certificate $certificate): bool
