@@ -76,7 +76,8 @@
         @update:options="fetchItems"
       >
         <template #item.number="{ item }">
-          <span class="font-weight-medium">{{ item.number }}</span>
+          <span v-if="item.number" class="font-weight-medium">{{ item.number }}</span>
+          <v-chip v-else size="small" color="grey" variant="tonal" label>Raqam yo'q</v-chip>
         </template>
         <template #item.employee.organization.name="{ item }">{{ item.employee?.organization?.name || '—' }}</template>
         <template #item.issue_date="{ item }">{{ formatDate(item.data?.issue_date) }}</template>
@@ -103,6 +104,8 @@
 
     <input ref="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" @change="uploadSigned" />
 
+    <CertificateNumberDialog ref="numberDialogRef" @saved="fetchItems" />
+
     <ConfirmDialog
       ref="confirmRef"
       title="Sertifikatni o'chirish"
@@ -120,6 +123,7 @@ import { useRoute } from 'vue-router'
 import api from '../../services/api'
 import { downloadFile, openFile } from '../../services/download'
 import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
+import CertificateNumberDialog from '../../components/certificates/CertificateNumberDialog.vue'
 import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
@@ -140,6 +144,7 @@ const filters = ref({
   status: null,
 })
 const fileInput = ref(null)
+const numberDialogRef = ref(null)
 const uploadTarget = ref(null)
 const confirmRef = ref(null)
 const deleteItem = ref(null)
@@ -208,6 +213,11 @@ watch(search, () => {
 })
 
 async function downloadGenerated(item) {
+  // Imzolanmagan sertifikatda avval raqam so'raladi (bor bo'lsa — oldindan to'ldirilgan, tuzatish mumkin).
+  if (item.status !== 'signed') {
+    numberDialogRef.value.open(item)
+    return
+  }
   busy.value = `pdf-${item.id}`
   try {
     await downloadFile(`/certificates/${item.id}/download`, {}, `sertifikat-${item.number}.pdf`)
@@ -244,7 +254,7 @@ async function uploadSigned(event) {
     const formData = new FormData()
     formData.append('file', file)
     await api.post(`/certificates/${item.id}/signed`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    notify(`№ ${item.number} — imzoli nusxa yuklandi`)
+    notify(`${item.employee?.full_name || 'Sertifikat'} — imzoli nusxa yuklandi`)
     await fetchItems()
   } catch (e) {
     const errors = e.response?.data?.errors?.file
@@ -258,7 +268,7 @@ async function regenerate(item) {
   busy.value = `regen-${item.id}`
   try {
     await api.post(`/certificates/${item.id}/regenerate`)
-    notify(`№ ${item.number} qayta yaratildi`)
+    notify(`${item.employee?.full_name || 'Sertifikat'} — qayta yaratildi`)
     await fetchItems()
   } catch (e) {
     notify(e.response?.data?.message || "Qayta yaratib bo'lmadi", 'error')

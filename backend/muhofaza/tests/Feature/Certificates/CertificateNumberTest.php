@@ -126,6 +126,19 @@ class CertificateNumberTest extends TestCase
         $this->assertSame(['2', '1'], [$a->fresh()->number, $b->fresh()->number]);
     }
 
+    public function test_bulk_numbers_keeps_unchanged_numbers(): void
+    {
+        $exam = $this->makeExam();
+        $kept = $this->issueNumbered($this->makeResult($exam), '0451');
+        $fresh = app(CertificateService::class)->issue($this->makeResult($exam));
+        Sanctum::actingAs($this->makeUser());
+
+        $this->putJson('/api/certificates/numbers', ['items' => [['id' => $kept->id, 'number' => '0451'], ['id' => $fresh->id, 'number' => '0452']]])
+            ->assertOk();
+
+        $this->assertSame(['0451', '0452'], [$kept->fresh()->number, $fresh->fresh()->number]);
+    }
+
     public function test_bulk_numbers_rejects_duplicate_inside_list(): void
     {
         $exam = $this->makeExam();

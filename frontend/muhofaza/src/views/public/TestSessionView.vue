@@ -42,7 +42,7 @@
             Sertifikatni yuklab olish
           </v-btn>
           <v-alert v-else type="info" variant="tonal" density="compact" rounded="lg" class="mt-4 text-left">
-            Sertifikat № {{ session.certificate.number }} — imzo kutilmoqda
+            {{ session.certificate.number ? `Sertifikat № ${session.certificate.number} — imzo kutilmoqda` : 'Sertifikat tayyorlanmoqda — imzo kutilmoqda' }}
           </v-alert>
         </template>
       </v-card>
@@ -89,7 +89,7 @@
         <div class="text-body-1 mb-4" style="color: #888">{{ result.earned_points }} / {{ result.total_points }} ball</div>
         <v-chip :color="gradeColor(result.grade)" size="large" label>{{ gradeText(result.grade) }}</v-chip>
         <v-alert v-if="result.certificate" type="success" variant="tonal" rounded="lg" class="mt-6 text-left">
-          Sertifikatingiz yaratildi (№ {{ result.certificate.number }}). Mas'ul shaxslar imzolagandan so'ng shu havolada yuklab olishingiz mumkin.
+          Sertifikatingiz yaratildi. Mas'ul shaxslar raqam berib imzolagandan so'ng shu havolada yuklab olishingiz mumkin.
         </v-alert>
       </v-card>
     </div>

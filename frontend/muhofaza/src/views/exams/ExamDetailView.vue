@@ -119,7 +119,7 @@
         <template #item.certificate="{ item }">
           <v-chip v-if="item.certificate" size="small" label :color="item.certificate.status === 'signed' ? 'success' : 'warning'"
             @click="router.push(`/certificates?periodic_exam_id=${route.params.id}`)">
-            № {{ item.certificate.number }} · {{ item.certificate.status === 'signed' ? 'Imzolangan' : 'Imzo kutilmoqda' }}
+            {{ item.certificate.number ? `№ ${item.certificate.number}` : "Raqam yo'q" }} · {{ item.certificate.status === 'signed' ? 'Imzolangan' : 'Imzo kutilmoqda' }}
           </v-chip>
           <span v-else style="color: #999">—</span>
         </template>
@@ -209,6 +209,8 @@
       @confirm="deleteResult"
     />
 
+    <BulkPrintDialog ref="bulkPrintRef" @saved="fetchResults" />
+
     <v-snackbar v-model="certSnackbar" :color="certSnackbarColor" timeout="5000">{{ certSnackbarText }}</v-snackbar>
   </div>
 </template>
@@ -217,14 +219,15 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
-import { downloadFile } from '../../services/download'
 import GradeBadge from '../../components/common/GradeBadge.vue'
 import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
+import BulkPrintDialog from '../../components/certificates/BulkPrintDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const generatingCertificates = ref(false)
 const printingCertificates = ref(false)
+const bulkPrintRef = ref(null)
 const certificateWarnings = ref([])
 const certSnackbar = ref(false)
 const certSnackbarText = ref('')
@@ -290,14 +293,9 @@ async function generateCertificates() {
   generatingCertificates.value = false
 }
 
-async function printCertificates() {
-  printingCertificates.value = true
-  try {
-    await downloadFile('/certificates/print', { periodic_exam_id: Number(route.params.id) }, `sertifikatlar-${route.params.id}.pdf`)
-  } catch (e) {
-    certNotify(e.message, 'error')
-  }
-  printingCertificates.value = false
+function printCertificates() {
+  // Avval raqamlar kiritiladi (ketma-ket to'ldirish bilan), keyin PDF yuklanadi.
+  bulkPrintRef.value.open(Number(route.params.id))
 }
 
 const defaultResultForm = () => ({

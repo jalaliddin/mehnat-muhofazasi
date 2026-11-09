@@ -115,8 +115,13 @@ class CertificateService
                 $ids = array_map(fn ($item) => $item['certificate']->id, $items);
                 Certificate::whereIn('id', $ids)->update(['number' => null]);
 
+                // Model "o'zgarmagan" deb UPDATE'ni o'tkazib yubormasligi uchun to'g'ridan-to'g'ri so'rov bilan yoziladi
+                // (bazada raqam hozirgina bo'shatildi, modelda esa eski qiymat turibdi).
                 foreach ($items as $item) {
-                    $item['certificate']->update(['number' => trim($item['number'])]);
+                    $number = trim($item['number']);
+                    Certificate::whereKey($item['certificate']->id)->update(['number' => $number]);
+                    $item['certificate']->number = $number;
+                    $item['certificate']->syncOriginalAttribute('number');
                 }
             });
         } catch (UniqueConstraintViolationException) {
