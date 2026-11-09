@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use App\Models\Certificate;
+use App\Models\CertificateType;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\ExamResult;
@@ -57,7 +58,6 @@ trait CertificateFixtures
             'duration_minutes' => 30,
             'passing_score'    => 60,
             'program_name'     => 'Mehnatni muhofaza qilish',
-            'training_hours'   => 72,
         ], $typeAttrs));
 
         $type->questionBanks()->attach($this->makeBank()->id, ['question_count' => 2]);
@@ -73,7 +73,21 @@ trait CertificateFixtures
             'created_by'        => $this->makeUser('admin')->id,
             'course_start_date' => '2026-11-01',
             'course_end_date'   => '2026-11-07',
+            'certificate_type_id' => $this->makeCertificateType()->id,
         ], $examAttrs));
+    }
+
+    protected function makeCertificateType(
+        ?string $name = null,
+        int $hours = 72,
+        string $title = CertificateType::DEFAULT_TITLE,
+        string $course = CertificateType::DEFAULT_COURSE,
+    ): CertificateType {
+        // Migratsiya 4 ta standart turni kiritadi — shu nomdagi tur bo'lsa, o'shani yangilab qaytaramiz.
+        return CertificateType::updateOrCreate(
+            ['name' => $name ?? 'Tur '.Str::upper(Str::random(6))],
+            ['hours' => $hours, 'title_text' => $title, 'course_text' => $course],
+        );
     }
 
     protected function makeBank(?string $name = null, int $questionCount = 2, int $points = 1): QuestionBank
@@ -165,6 +179,9 @@ trait CertificateFixtures
                 'inspector_name'        => 'M. Yurev',
                 'city'                  => 'Urganch sh.',
                 'issue_date'            => '2026-11-07',
+                'certificate_type_name' => '72 soatlik malaka oshirish',
+                'title_text'            => CertificateType::DEFAULT_TITLE,
+                'course_text'           => CertificateType::DEFAULT_COURSE,
             ],
         ], $attrs));
     }

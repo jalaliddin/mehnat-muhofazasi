@@ -22,6 +22,19 @@ class CertificatePdf
      */
     public function render(iterable $certificates): string
     {
+        return Pdf::loadHTML($this->html($certificates))
+            ->setPaper('a4', 'portrait')
+            ->setOption('defaultFont', 'DejaVu Serif')
+            ->output();
+    }
+
+    /**
+     * Sertifikatlar HTML'i (PDF shu HTML'dan chiziladi; testlar matnni shu yerda tekshiradi).
+     *
+     * @param  iterable<Certificate>  $certificates
+     */
+    public function html(iterable $certificates): string
+    {
         $pages = [];
 
         foreach ($certificates as $certificate) {
@@ -33,13 +46,10 @@ class CertificatePdf
             ];
         }
 
-        return Pdf::loadView('certificates.certificate', [
+        return view('certificates.certificate', [
             'pages'  => $pages,
             'emblem' => 'data:image/png;base64,'.base64_encode(file_get_contents(resource_path('certificates/emblem.png'))),
-        ])
-            ->setPaper('a4', 'portrait')
-            ->setOption('defaultFont', 'DejaVu Serif')
-            ->output();
+        ])->render();
     }
 
     public static function verifyUrl(string $publicCode): string

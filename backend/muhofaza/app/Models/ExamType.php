@@ -8,7 +8,7 @@ class ExamType extends Model
 {
     protected $fillable = [
         'name', 'description', 'frequency_months', 'exam_month', 'exam_month_note',
-        'duration_minutes', 'passing_score', 'program_name', 'training_hours',
+        'duration_minutes', 'passing_score', 'program_name',
     ];
 
     public function periodicExams()

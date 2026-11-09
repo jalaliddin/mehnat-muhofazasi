@@ -71,7 +71,7 @@
     <div class="page {{ $loop->last ? 'last' : '' }}">
         <div class="center"><img class="emblem" src="{{ $emblem }}" alt=""></div>
 
-        <div class="center heading">Mehnatni muhofaza qilish sohasida malaka oshirganlik haqida</div>
+        <div class="center heading">{{ filled($d['title_text'] ?? null) ? $d['title_text'] : \App\Models\CertificateType::DEFAULT_TITLE }}</div>
         <div class="center title">SERTIFIKAT</div>
         <div class="center number">№ {{ $page['number'] ?: '_______' }}</div>
 
@@ -86,7 +86,7 @@
         <div class="program" style="{{ $fit($d['program_name'] ?? '', 12, [50 => 10.5, 90 => 9]) }}">{{ $value('program_name') }}</div>
         <div class="caption">(xodimlar malakasini oshirish dasturining nomi)</div>
 
-        <div class="text">dastur bo‘yicha {{ $value('training_hours', '____') }} soat hajmida malaka oshirish kursida o‘qidi:</div>
+        <div class="text">dastur bo‘yicha {{ $value('training_hours', '____') }} soat hajmida {{ filled($d['course_text'] ?? null) ? $d['course_text'] : \App\Models\CertificateType::DEFAULT_COURSE }} o‘qidi:</div>
         <div class="seal">Muhr o‘rni :</div>
 
         <table class="signs">

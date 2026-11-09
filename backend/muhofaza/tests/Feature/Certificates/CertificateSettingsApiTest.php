@@ -38,15 +38,15 @@ class CertificateSettingsApiTest extends TestCase
         $this->putJson('/api/certificate-settings', ['city' => 'X'])->assertForbidden();
     }
 
-    public function test_exam_type_update_stores_program_and_hours(): void
+    public function test_exam_type_update_stores_program_name(): void
     {
-        $exam = $this->makeExam(null, [], ['program_name' => null, 'training_hours' => null]);
+        $exam = $this->makeExam(null, [], ['program_name' => null]);
         Sanctum::actingAs($this->makeUser('admin'));
 
-        $this->putJson("/api/exam-types/{$exam->exam_type_id}", ['program_name' => 'Mehnatni muhofaza qilish', 'training_hours' => 72])
+        $this->putJson("/api/exam-types/{$exam->exam_type_id}", ['program_name' => 'Mehnatni muhofaza qilish'])
             ->assertOk()
             ->assertJsonPath('program_name', 'Mehnatni muhofaza qilish')
-            ->assertJsonPath('training_hours', 72);
+            ->assertJsonMissingPath('training_hours');
     }
 
     public function test_periodic_exam_rejects_course_end_before_start(): void

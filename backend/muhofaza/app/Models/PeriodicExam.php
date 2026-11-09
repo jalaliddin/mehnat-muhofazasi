@@ -9,7 +9,7 @@ class PeriodicExam extends Model
     protected $fillable = [
         'organization_id', 'exam_type_id', 'order_id', 'title',
         'exam_date', 'frequency_months', 'next_exam_date', 'status', 'created_by',
-        'course_start_date', 'course_end_date',
+        'course_start_date', 'course_end_date', 'certificate_type_id',
     ];
 
     protected $casts = [
@@ -27,6 +27,11 @@ class PeriodicExam extends Model
     public function examType()
     {
         return $this->belongsTo(ExamType::class);
+    }
+
+    public function certificateType()
+    {
+        return $this->belongsTo(CertificateType::class);
     }
 
     public function order()

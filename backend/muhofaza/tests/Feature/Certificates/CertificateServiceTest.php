@@ -50,8 +50,9 @@ class CertificateServiceTest extends TestCase
             'inspector_name'        => 'M. Yurev',
             'city'                  => 'Urganch sh.',
         ]);
-        $exam = $this->makeExam(null, ['course_start_date' => '2026-11-01', 'course_end_date' => '2026-11-07'],
-            ['program_name' => 'Mehnatni muhofaza qilish', 'training_hours' => 72]);
+        $certificateType = $this->makeCertificateType('72 soatlik malaka oshirish', 72);
+        $exam = $this->makeExam(null, ['course_start_date' => '2026-11-01', 'course_end_date' => '2026-11-07', 'certificate_type_id' => $certificateType->id],
+            ['program_name' => 'Mehnatni muhofaza qilish']);
         $result = $this->makeResult($exam, 'good', $this->makeEmployee($exam, 'Aliyev Vali'), Carbon::parse('2026-11-07 10:00'));
 
         $this->assertSame([
@@ -66,6 +67,9 @@ class CertificateServiceTest extends TestCase
             'inspector_name'        => 'M. Yurev',
             'city'                  => 'Urganch sh.',
             'issue_date'            => '2026-11-07',
+            'certificate_type_name' => '72 soatlik malaka oshirish',
+            'title_text'            => 'Mehnatni muhofaza qilish sohasida malaka oshirganlik haqida',
+            'course_text'           => 'malaka oshirish kursida',
         ], app(CertificateService::class)->issue($result)->data);
     }
 
@@ -138,10 +142,10 @@ class CertificateServiceTest extends TestCase
 
     public function test_missing_field_warnings(): void
     {
-        $exam = $this->makeExam(null, ['course_start_date' => null], ['training_hours' => null]);
+        $exam = $this->makeExam(null, ['course_start_date' => null, 'certificate_type_id' => null]);
 
         $this->assertSame(
-            ['Kurs sanalari kiritilmagan', 'Soat hajmi kiritilmagan', "Sertifikat sozlamalari to'ldirilmagan"],
+            ['Kurs sanalari kiritilmagan', 'Sertifikat turi tanlanmagan', "Sertifikat sozlamalari to'ldirilmagan"],
             app(CertificateService::class)->missingFieldWarnings($exam)
         );
     }

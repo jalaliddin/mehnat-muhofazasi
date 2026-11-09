@@ -72,16 +72,17 @@ class CertificateService
 
     public function buildData(ExamResult $result): array
     {
-        $result->loadMissing('employee', 'periodicExam.examType');
+        $result->loadMissing('employee', 'periodicExam.examType', 'periodicExam.certificateType');
         $exam = $result->periodicExam;
         $type = $exam->examType;
+        $certificateType = $exam->certificateType;
         $settings = CertificateSetting::current();
 
         return [
             'full_name'             => $result->employee->full_name,
             'institution_name'      => $settings->institution_name,
             'program_name'          => $type->program_name ?: $type->name,
-            'training_hours'        => $type->training_hours === null ? null : (int) $type->training_hours,
+            'training_hours'        => $certificateType?->hours,
             'course_start_date'     => $exam->course_start_date?->toDateString(),
             'course_end_date'       => $exam->course_end_date?->toDateString(),
             'commission_chair_name' => $settings->commission_chair_name,
@@ -89,6 +90,9 @@ class CertificateService
             'inspector_name'        => $settings->inspector_name,
             'city'                  => $settings->city,
             'issue_date'            => $result->created_at->toDateString(),
+            'certificate_type_name' => $certificateType?->name,
+            'title_text'            => $certificateType?->title_text,
+            'course_text'           => $certificateType?->course_text,
         ];
     }
 
@@ -123,8 +127,8 @@ class CertificateService
             $warnings[] = 'Kurs sanalari kiritilmagan';
         }
 
-        if (! $exam->examType->training_hours) {
-            $warnings[] = 'Soat hajmi kiritilmagan';
+        if (! $exam->certificate_type_id) {
+            $warnings[] = 'Sertifikat turi tanlanmagan';
         }
 
         $settings = CertificateSetting::current();
