@@ -204,6 +204,21 @@
               </v-col>
               <v-col cols="12">
                 <v-select
+                  v-model="form.certificate_type_id"
+                  :items="certificateTypes"
+                  item-title="name"
+                  item-value="id"
+                  label="Sertifikat turi"
+                  variant="outlined"
+                  rounded="lg"
+                  clearable
+                  prepend-inner-icon="mdi-certificate-outline"
+                  hint="Sertifikatdagi soat va matn shu turdan olinadi"
+                  persistent-hint
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-select
                   v-model="form.status"
                   :items="statusOptions"
                   item-title="label"
@@ -287,6 +302,7 @@ const authStore = useAuthStore()
 const exams = ref([])
 const organizations = ref([])
 const examTypes = ref([])
+const certificateTypes = ref([])
 const dialogEmployees = ref([])
 const dialogDepartments = ref([])
 const loading = ref(false)
@@ -322,6 +338,7 @@ const defaultForm = () => ({
   employee_ids: [],
   course_start_date: '',
   course_end_date: '',
+  certificate_type_id: null,
 })
 
 const form = ref(defaultForm())
@@ -429,6 +446,7 @@ function openEdit(item) {
     employee_ids: item.employees?.map(e => e.id) || [],
     course_start_date: item.course_start_date?.slice(0, 10) || '',
     course_end_date: item.course_end_date?.slice(0, 10) || '',
+    certificate_type_id: item.certificate_type_id || null,
   }
   calcNextDate()
   onDialogOrgChange(item.organization_id)
@@ -443,14 +461,16 @@ function openDelete(item) {
 async function fetchAll() {
   loading.value = true
   try {
-    const [examRes, orgRes, typeRes] = await Promise.all([
+    const [examRes, orgRes, typeRes, certTypeRes] = await Promise.all([
       api.get('/periodic-exams'),
       api.get('/organizations'),
       api.get('/exam-types'),
+      api.get('/certificate-types'),
     ])
     exams.value = examRes.data.data || examRes.data
     organizations.value = orgRes.data.data || orgRes.data
     examTypes.value = typeRes.data.data || typeRes.data
+    certificateTypes.value = certTypeRes.data
   } catch (e) {}
   loading.value = false
 }
