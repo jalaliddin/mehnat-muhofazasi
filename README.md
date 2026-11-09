@@ -89,22 +89,26 @@ docker compose exec app php artisan db:seed
 
 ## Sertifikatlar
 
-Testdan o'tgan o'quvchiga tizim "Mehnatni muhofaza qilish sohasida malaka oshirganlik haqida" sertifikatini PDF ko'rinishida, QR kod bilan yaratadi.
+Testdan o'tgan o'quvchiga tizim sertifikatni PDF ko'rinishida, QR kod bilan yaratadi. Sertifikat **turi** davriy imtihonda tanlanadi va soat, sarlavha hamda kurs matnini belgilaydi. Boshlang'ich turlar: 36 soatlik malaka oshirish, 36 soatlik o'qish, 72 soatlik malaka oshirish, 288 soatlik qayta tayyorlov — ularni admin "Sertifikat sozlamalari"da tahrirlaydi va yangisini qo'shadi.
 
 **Jarayon:**
 
-1. O'quvchi onlayn testdan o'tadi (baho "qoniqarsiz" emas) va sertifikat avtomatik yaratiladi. Qo'lda kiritilgan natijalar uchun imtihon sahifasidagi **"Sertifikat yaratish"** tugmasi ishlatiladi.
-2. Admin yoki operator **"Imzolash uchun chop etish (PDF)"** yoki **Sertifikatlar** sahifasidan PDF ni yuklab oladi, chop etadi va mas'ul shaxslarga imzo qo'ydirib, muhr bostiradi.
+1. O'quvchi onlayn testdan o'tadi (baho "qoniqarsiz" emas) va sertifikat avtomatik yaratiladi — hali **raqamsiz**. Qo'lda kiritilgan natijalar uchun imtihon sahifasidagi **"Sertifikat yaratish"** tugmasi ishlatiladi. Ro'yxatdan o'tish raqami avtomatik beriladi.
+2. Admin yoki operator sertifikat **raqamini (№) qo'lda kiritadi** va PDF ni yuklab oladi:
+   - bittasi — **Sertifikatlar** sahifasidagi 📄 tugmasi (raqam so'raladi);
+   - imtihon bo'yicha hammasi — **"Imzolash uchun chop etish (PDF)"**: ro'yxatda har biriga raqam, "Birinchi raqam" + **"Ketma-ket to'ldirish"** bo'sh kataklarni to'ldiradi (raqamning oxirgi soni oshiriladi: `MM-0451` → `MM-0452`).
+
+   Raqamsiz PDF yuklab olinmaydi. Raqam takrorlanmaydi; imzolangan sertifikat raqami o'zgarmaydi. Chop etilgach mas'ul shaxslar imzolaydi va muhr bosiladi.
 3. Skanerlangan imzoli nusxa (PDF/JPG/PNG, 10 MB gacha) **Sertifikatlar** sahifasida ⬆️ tugmasi orqali yuklanadi.
 4. O'quvchi test havolasini qayta ochib sertifikatni yuklab oladi. QR kod `https://mehnatmuhofazasi.uz/sertifikat/{kod}` tekshirish sahifasini ochadi va u yerdan imzoli nusxani yuklab olish mumkin.
 
 **Birinchi deploydan keyin to'ldiring:**
 
 - **Sertifikat sozlamalari** (faqat admin): ta'lim muassasasi nomi, 3 imzolovchining F.I.O., shahar.
-- **Imtihon turlari:** "Dastur nomi" va "Soat hajmi".
-- **Davriy imtihonlar:** "Kurs boshlanishi" va "Kurs tugashi".
+- **Imtihon turlari:** "Dastur nomi".
+- **Davriy imtihonlar:** "Kurs boshlanishi", "Kurs tugashi" va **"Sertifikat turi"**. Yangilashda eski "Soat hajmi" 36/72/288 bo'lgan imtihonlarga tur avtomatik qo'yiladi (36 → "36 soatlik malaka oshirish"); qolganlarida turni qo'lda tanlang.
 
-To'ldirilmagan maydonlar sertifikatda `____` bo'lib chiqadi. To'ldirgandan keyin imzolanmagan sertifikatlarni "Sertifikat yaratish" tugmasi bilan qayta yaratish mumkin (raqam va QR o'zgarmaydi).
+To'ldirilmagan maydonlar sertifikatda `____` bo'lib chiqadi. To'ldirgandan keyin imzolanmagan sertifikatlarni "Sertifikat yaratish" tugmasi bilan qayta yaratish mumkin (raqam va QR o'zgarmaydi). Oldin berilgan avtomatik raqamlar (`2026-0001` kabi) saqlanadi.
 
 > **Muhim:** QR havolasi `APP_URL` dan olinadi. Productionda `backend/muhofaza/.env.docker` ichida `APP_URL=https://mehnatmuhofazasi.uz` bo'lishi shart. Fayllar `storage/app/private/certificates/` da saqlanadi (Docker'da `app_storage` volume).
 
