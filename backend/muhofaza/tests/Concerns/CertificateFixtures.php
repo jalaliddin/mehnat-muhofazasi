@@ -154,6 +154,17 @@ trait CertificateFixtures
         ]);
     }
 
+    /**
+     * Sertifikatni yaratadi va unga raqam beradi (PDF shu paytda chiziladi).
+     */
+    protected function issueNumbered(ExamResult $result, ?string $number = null): Certificate
+    {
+        $service = app(\App\Services\CertificateService::class);
+        $certificate = $service->issue($result);
+
+        return $service->setNumber($certificate, $number ?? 'T-'.$certificate->id);
+    }
+
     protected function makeCertificate(ExamResult $result, array $attrs = []): Certificate
     {
         $n = ++self::$certificateCounter;

@@ -52,7 +52,7 @@ class CertificateController extends Controller
             return response()->json(['message' => 'Fayl topilmadi'], 404);
         }
 
-        $name = "sertifikat-{$certificate->number}.".pathinfo($certificate->signed_path, PATHINFO_EXTENSION);
+        $name = "sertifikat-{$certificate->fileLabel()}.".pathinfo($certificate->signed_path, PATHINFO_EXTENSION);
 
         return Storage::disk('local')->response($certificate->signed_path, $name, [], 'inline');
     }

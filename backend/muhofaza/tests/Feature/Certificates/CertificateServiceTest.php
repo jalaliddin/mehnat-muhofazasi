@@ -27,7 +27,7 @@ class CertificateServiceTest extends TestCase
         Storage::fake('local');
     }
 
-    public function test_numbers_restart_each_year_and_registration_continues(): void
+    public function test_registration_numbers_continue_and_number_is_left_empty(): void
     {
         $exam = $this->makeExam();
         $svc = app(CertificateService::class);
@@ -36,7 +36,7 @@ class CertificateServiceTest extends TestCase
         $b = $svc->issue($this->makeResult($exam, 'good', null, Carbon::parse('2026-05-01')));
         $c = $svc->issue($this->makeResult($exam, 'good', null, Carbon::parse('2027-01-10')));
 
-        $this->assertSame(['2026-0001', '2026-0002', '2027-0001'], [$a->number, $b->number, $c->number]);
+        $this->assertSame([null, null, null], [$a->number, $b->number, $c->number]);
         $this->assertSame([1, 2, 3], [$a->registration_number, $b->registration_number, $c->registration_number]);
         $this->assertSame(32, strlen($a->public_code));
     }
@@ -78,14 +78,6 @@ class CertificateServiceTest extends TestCase
         $exam = $this->makeExam(null, [], ['name' => 'Elektr xavfsizligi', 'program_name' => null]);
 
         $this->assertSame('Elektr xavfsizligi', app(CertificateService::class)->buildData($this->makeResult($exam))['program_name']);
-    }
-
-    public function test_issue_writes_generated_pdf(): void
-    {
-        $cert = app(CertificateService::class)->issue($this->makeResult($this->makeExam()));
-
-        $this->assertSame("certificates/generated/{$cert->number}.pdf", $cert->generated_path);
-        $this->assertStringStartsWith('%PDF', Storage::disk('local')->get($cert->generated_path));
     }
 
     public function test_reissue_unsigned_keeps_numbers_and_refreshes_data(): void
@@ -134,7 +126,7 @@ class CertificateServiceTest extends TestCase
 
         Storage::disk('local')->assertMissing($old);
         Storage::disk('local')->assertExists($fresh->signed_path);
-        $this->assertStringStartsWith("certificates/signed/{$cert->number}-", $fresh->signed_path);
+        $this->assertStringStartsWith("certificates/signed/{$cert->id}-", $fresh->signed_path);
         $this->assertStringEndsWith('.pdf', $fresh->signed_path);
         $this->assertSame($user->id, $fresh->signed_by);
         $this->assertNotNull($fresh->signed_at);
@@ -166,7 +158,7 @@ class CertificateServiceTest extends TestCase
 
         $this->assertTrue($thrown);
         $this->assertSame(1, Certificate::count());
-        $this->assertNotNull($cert->generated_path);
+        $this->assertSame(1, $cert->registration_number);
     }
 
     public function test_issue_uses_certificate_created_concurrently_for_same_result(): void
@@ -199,7 +191,7 @@ class CertificateServiceTest extends TestCase
     {
         $svc = app(CertificateService::class);
         $result = $this->makeResult($this->makeExam());
-        $cert = $svc->issue($result);
+        $cert = $this->issueNumbered($result);
         Storage::disk('local')->put($cert->generated_path, 'MARKER');
 
         $svc->issue($result->fresh());
@@ -214,7 +206,7 @@ class CertificateServiceTest extends TestCase
     {
         $svc = app(CertificateService::class);
         $result = $this->makeResult($this->makeExam());
-        $cert = $svc->issue($result);
+        $cert = $this->issueNumbered($result);
         Storage::disk('local')->delete($cert->generated_path);
 
         $svc->issue($result->fresh());

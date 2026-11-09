@@ -102,9 +102,9 @@ class CertificateAdminApiTest extends TestCase
 
         $this->getJson("/api/certificates/print?periodic_exam_id={$exam->id}")
             ->assertNotFound()
-            ->assertJsonPath('message', "Chop etish uchun imzolanmagan sertifikat yo'q");
+            ->assertJsonPath('message', "Chop etish uchun raqamlangan, imzolanmagan sertifikat yo'q");
 
-        app(CertificateService::class)->issue($this->makeResult($exam));
+        $this->issueNumbered($this->makeResult($exam));
         $res = $this->get("/api/certificates/print?periodic_exam_id={$exam->id}")->assertOk();
 
         $this->assertSame('application/pdf', $res->headers->get('Content-Type'));

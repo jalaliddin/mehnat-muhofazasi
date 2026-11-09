@@ -23,7 +23,7 @@ class CertificateFilesApiTest extends TestCase
 
     private function issued(?\App\Models\Organization $org = null): Certificate
     {
-        return app(CertificateService::class)->issue($this->makeResult($this->makeExam($org)));
+        return $this->issueNumbered($this->makeResult($this->makeExam($org)));
     }
 
     public function test_upload_signed_accepts_pdf_and_png(): void

@@ -36,7 +36,7 @@ class OnlineTestCertificateTest extends TestCase
         $this->takeTest($this->makeSession($exam, $this->makeEmployee($exam)), true)
             ->assertOk()
             ->assertJsonPath('certificate.status', 'pending_signature')
-            ->assertJsonPath('certificate.number', now()->year.'-0001');
+            ->assertJsonPath('certificate.number', null);
 
         $this->assertSame(1, Certificate::count());
     }

@@ -27,7 +27,8 @@ class CertificateService
     }
 
     /**
-     * Natija uchun sertifikat yaratadi yoki (imzolanmagan bo'lsa) ma'lumot va PDF ni yangilaydi.
+     * Natija uchun sertifikat yaratadi yoki (imzolanmagan bo'lsa) ma'lumotini yangilaydi.
+     * Yangi sertifikat raqamsiz va PDF'siz bo'ladi — raqamni admin kiritadi (setNumber), PDF shunda chiziladi.
      * Raqam, ro'yxat raqami va public_code qayta yaratishda o'zgarmaydi.
      */
     public function issue(ExamResult $result): Certificate
@@ -55,19 +56,96 @@ class CertificateService
 
         if (! $certificate->wasRecentlyCreated) {
             // Ma'lumot o'zgarmagan va PDF joyida bo'lsa, qayta chizish shart emas (ommaviy yaratish tez bo'ladi).
-            if ($certificate->data == $data && $certificate->generated_path
-                && Storage::disk('local')->exists($certificate->generated_path)) {
+            if ($certificate->data == $data && $this->hasFreshPdf($certificate)) {
                 return $certificate;
             }
 
             $certificate->update(['data' => $data]);
         }
 
-        $path = "certificates/generated/{$certificate->number}.pdf";
-        Storage::disk('local')->put($path, $this->pdf->render([$certificate]));
-        $certificate->update(['generated_path' => $path]);
+        if ($certificate->number) {
+            $this->renderPdf($certificate);
+        }
 
         return $certificate;
+    }
+
+    /**
+     * Sertifikat raqamini qo'lda belgilaydi va PDF ni shu raqam bilan chizadi.
+     */
+    public function setNumber(Certificate $certificate, string $number): Certificate
+    {
+        $number = trim($number);
+
+        if ($certificate->signed_path) {
+            throw new CertificateException("Imzolangan sertifikat raqamini o'zgartirib bo'lmaydi");
+        }
+
+        if (Certificate::where('number', $number)->where('id', '!=', $certificate->id)->exists()) {
+            throw new CertificateException('Bu raqam boshqa sertifikatga berilgan');
+        }
+
+        try {
+            $certificate->update(['number' => $number]);
+        } catch (UniqueConstraintViolationException) {
+            throw new CertificateException('Bu raqam boshqa sertifikatga berilgan');
+        }
+
+        $this->renderPdf($certificate);
+
+        return $certificate;
+    }
+
+    /**
+     * Bir nechta sertifikatga raqamni bitta tranzaksiyada beradi. Avval hammasining raqami bo'shatiladi —
+     * shunda o'zaro almashtirish (A↔B) unique indeksga urilmaydi. PDF'lar tranzaksiyadan keyin chiziladi.
+     *
+     * @param  list<array{certificate: Certificate, number: string}>  $items
+     */
+    public function setNumbers(array $items): void
+    {
+        foreach ($items as $item) {
+            if ($item['certificate']->signed_path) {
+                throw new CertificateException("Imzolangan sertifikat raqamini o'zgartirib bo'lmaydi");
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($items) {
+                $ids = array_map(fn ($item) => $item['certificate']->id, $items);
+                Certificate::whereIn('id', $ids)->update(['number' => null]);
+
+                foreach ($items as $item) {
+                    $item['certificate']->update(['number' => trim($item['number'])]);
+                }
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw new CertificateException('Bu raqam boshqa sertifikatga berilgan');
+        }
+
+        foreach ($items as $item) {
+            $this->renderPdf($item['certificate']);
+        }
+    }
+
+    private function hasFreshPdf(Certificate $certificate): bool
+    {
+        return $certificate->generated_path && Storage::disk('local')->exists($certificate->generated_path);
+    }
+
+    /**
+     * PDF raqam bo'yicha emas, ID bo'yicha saqlanadi — qo'lda kiritilgan raqamda "/" yoki bo'sh joy bo'lishi mumkin.
+     */
+    private function renderPdf(Certificate $certificate): void
+    {
+        $path = "certificates/generated/{$certificate->id}.pdf";
+        Storage::disk('local')->put($path, $this->pdf->render([$certificate]));
+
+        if ($certificate->generated_path && $certificate->generated_path !== $path) {
+            Storage::disk('local')->delete($certificate->generated_path);
+        }
+
+        $certificate->update(['generated_path' => $path]);
     }
 
     public function buildData(ExamResult $result): array
@@ -99,7 +177,7 @@ class CertificateService
     public function storeSigned(Certificate $certificate, UploadedFile $file, User $by): Certificate
     {
         $extension = strtolower($file->extension() ?: $file->getClientOriginalExtension());
-        $name = "{$certificate->number}-".Str::random(8).".{$extension}";
+        $name = "{$certificate->id}-".Str::random(8).".{$extension}";
         $path = $file->storeAs('certificates/signed', $name, 'local');
 
         if ($certificate->signed_path && $certificate->signed_path !== $path) {
@@ -147,23 +225,20 @@ class CertificateService
         return $warnings;
     }
 
+    /**
+     * Yangi sertifikat: faqat ro'yxatdan o'tish raqami avtomatik beriladi (№ ni admin qo'lda kiritadi).
+     */
     private function createWithNumbers(ExamResult $result, array $data): Certificate
     {
-        $year = $result->created_at->year;
-
         for ($attempt = 1; ; $attempt++) {
             try {
-                return DB::transaction(function () use ($result, $data, $year) {
-                    $sequence = (int) Certificate::where('year', $year)->lockForUpdate()->max('sequence') + 1;
+                return DB::transaction(function () use ($result, $data) {
                     $registration = (int) Certificate::lockForUpdate()->max('registration_number') + 1;
 
                     return Certificate::create([
                         'exam_result_id'      => $result->id,
                         'employee_id'         => $result->employee_id,
                         'periodic_exam_id'    => $result->periodic_exam_id,
-                        'year'                => $year,
-                        'sequence'            => $sequence,
-                        'number'              => sprintf('%d-%04d', $year, $sequence),
                         'registration_number' => $registration,
                         'public_code'         => Str::random(32),
                         'data'                => $data,

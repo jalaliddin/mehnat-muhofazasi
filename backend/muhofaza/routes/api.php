@@ -108,6 +108,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/certificates', [CertificateController::class, 'index']);
     Route::post('/certificates/generate', [CertificateController::class, 'generate']);
     Route::get('/certificates/print', [CertificateController::class, 'print']);
+    Route::put('/certificates/numbers', [CertificateController::class, 'updateNumbers']);
+    Route::put('/certificates/{id}/number', [CertificateController::class, 'updateNumber']);
     Route::post('/certificates/{id}/regenerate', [CertificateController::class, 'regenerate']);
     Route::get('/certificates/{id}/download', [CertificateController::class, 'download']);
     Route::post('/certificates/{id}/signed', [CertificateController::class, 'uploadSigned']);

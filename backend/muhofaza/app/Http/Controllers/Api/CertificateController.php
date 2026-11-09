@@ -11,9 +11,17 @@ use App\Services\CertificatePdf;
 use App\Services\CertificateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CertificateController extends Controller
 {
+    private const NUMBER_MESSAGES = [
+        'number.required' => 'Sertifikat raqamini kiriting',
+        'number.max'      => 'Raqam 50 belgidan oshmasligi kerak',
+        'number.unique'   => 'Bu raqam boshqa sertifikatga berilgan',
+    ];
+
     public function __construct(
         private CertificateService $certificates,
         private CertificatePdf $pdf,
@@ -47,7 +55,7 @@ class CertificateController extends Controller
             });
         }
 
-        $perPage = min(max((int) $request->input('per_page', 25), 1), 100);
+        $perPage = min(max((int) $request->input('per_page', 25), 1), 500);
 
         return response()->json($query->orderByDesc('id')->paginate($perPage));
     }
@@ -99,11 +107,12 @@ class CertificateController extends Controller
 
         $certificates = Certificate::where('periodic_exam_id', $exam->id)
             ->whereNull('signed_path')
+            ->whereNotNull('number')
             ->orderBy('id')
             ->get();
 
         if ($certificates->isEmpty()) {
-            return response()->json(['message' => "Chop etish uchun imzolanmagan sertifikat yo'q"], 404);
+            return response()->json(['message' => "Chop etish uchun raqamlangan, imzolanmagan sertifikat yo'q"], 404);
         }
 
         return response($this->pdf->render($certificates), 200, [
@@ -118,6 +127,11 @@ class CertificateController extends Controller
         $this->authorizeExam($request->user(), $certificate->periodicExam);
 
         $signed = $request->query('type') === 'signed';
+
+        if (! $signed && ! $certificate->number) {
+            return response()->json(['message' => 'Avval sertifikat raqamini kiriting'], 422);
+        }
+
         $path = $signed ? $certificate->signed_path : $certificate->generated_path;
 
         if (! $path || ! Storage::disk('local')->exists($path)) {
@@ -125,10 +139,71 @@ class CertificateController extends Controller
         }
 
         $name = $signed
-            ? "sertifikat-{$certificate->number}-imzoli.".pathinfo($path, PATHINFO_EXTENSION)
-            : "sertifikat-{$certificate->number}.pdf";
+            ? "sertifikat-{$certificate->fileLabel()}-imzoli.".pathinfo($path, PATHINFO_EXTENSION)
+            : "sertifikat-{$certificate->fileLabel()}.pdf";
 
         return Storage::disk('local')->download($path, $name);
+    }
+
+    public function updateNumber(Request $request, $id)
+    {
+        $certificate = Certificate::with('periodicExam')->findOrFail($id);
+        $this->authorizeExam($request->user(), $certificate->periodicExam);
+
+        $data = $request->validate([
+            'number' => ['required', 'string', 'max:50', Rule::unique('certificates', 'number')->ignore($certificate->id)],
+        ], self::NUMBER_MESSAGES);
+
+        try {
+            $this->certificates->setNumber($certificate, $data['number']);
+        } catch (CertificateException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json($certificate->fresh(['employee.organization', 'periodicExam']));
+    }
+
+    public function updateNumbers(Request $request)
+    {
+        $data = $request->validate([
+            'items'          => 'required|array|min:1',
+            'items.*.id'     => 'required|integer|distinct|exists:certificates,id',
+            'items.*.number' => 'required|string|max:50|distinct:ignore_case',
+        ], [
+            'items.*.number.required' => 'Sertifikat raqamini kiriting',
+            'items.*.number.max'      => 'Raqam 50 belgidan oshmasligi kerak',
+            'items.*.number.distinct' => "Bu raqam ro'yxatda takrorlangan",
+        ]);
+
+        $certificates = Certificate::with('periodicExam')->whereIn('id', array_column($data['items'], 'id'))->get()->keyBy('id');
+        $ids = $certificates->keys()->all();
+        $errors = [];
+
+        foreach ($data['items'] as $i => $item) {
+            $certificate = $certificates[$item['id']];
+            $this->authorizeExam($request->user(), $certificate->periodicExam);
+
+            if ($certificate->signed_path) {
+                $errors["items.{$i}.number"] = ["Imzolangan sertifikat raqamini o'zgartirib bo'lmaydi"];
+            } elseif (Certificate::where('number', $item['number'])->whereNotIn('id', $ids)->exists()) {
+                $errors["items.{$i}.number"] = ['Bu raqam boshqa sertifikatga berilgan'];
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        try {
+            $this->certificates->setNumbers(array_map(fn ($item) => [
+                'certificate' => $certificates[$item['id']],
+                'number'      => $item['number'],
+            ], $data['items']));
+        } catch (CertificateException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['updated' => count($data['items'])]);
     }
 
     public function uploadSigned(Request $request, $id)

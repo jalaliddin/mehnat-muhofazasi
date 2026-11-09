@@ -37,6 +37,14 @@ class Certificate extends Model
         return $this->signed_path ? 'signed' : 'pending_signature';
     }
 
+    /**
+     * Fayl nomi uchun xavfsiz raqam (yo'q bo'lsa — ID).
+     */
+    public function fileLabel(): string
+    {
+        return $this->number ? preg_replace('/[^A-Za-z0-9._-]/', '-', $this->number) : (string) $this->id;
+    }
+
     public function registrationLabel(): string
     {
         return str_pad((string) $this->registration_number, 6, '0', STR_PAD_LEFT);
