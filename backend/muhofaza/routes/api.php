@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\CertificateSettingController;
+use App\Http\Controllers\Api\CertificateTypeController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -114,7 +115,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/certificates/{id}/download', [CertificateController::class, 'download']);
     Route::post('/certificates/{id}/signed', [CertificateController::class, 'uploadSigned']);
     Route::delete('/certificates/{id}', [CertificateController::class, 'destroy']);
+    Route::get('/certificate-types', [CertificateTypeController::class, 'index']);
     Route::middleware('role:admin')->group(function () {
+        Route::post('/certificate-types', [CertificateTypeController::class, 'store']);
+        Route::put('/certificate-types/{id}', [CertificateTypeController::class, 'update']);
+        Route::delete('/certificate-types/{id}', [CertificateTypeController::class, 'destroy']);
         Route::get('/certificate-settings', [CertificateSettingController::class, 'show']);
         Route::put('/certificate-settings', [CertificateSettingController::class, 'update']);
     });

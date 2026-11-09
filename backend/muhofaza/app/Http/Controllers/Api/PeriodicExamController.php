@@ -12,7 +12,7 @@ class PeriodicExamController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = PeriodicExam::with(['organization', 'examType', 'order', 'creator']);
+        $query = PeriodicExam::with(['organization', 'examType', 'order', 'creator', 'certificateType']);
 
         if ($user->role === 'operator' && $user->organization_id) {
             $query->where('organization_id', $user->organization_id);
@@ -36,7 +36,7 @@ class PeriodicExamController extends Controller
     public function show($id)
     {
         return response()->json(
-            PeriodicExam::with(['organization', 'examType', 'order', 'creator', 'employees'])->findOrFail($id)
+            PeriodicExam::with(['organization', 'examType', 'order', 'creator', 'employees', 'certificateType'])->findOrFail($id)
         );
     }
 
@@ -60,7 +60,7 @@ class PeriodicExamController extends Controller
 
         $exam = PeriodicExam::create($data);
 
-        return response()->json($exam->load(['organization', 'examType', 'order', 'creator']), 201);
+        return response()->json($exam->load(['organization', 'examType', 'order', 'creator', 'certificateType']), 201);
     }
 
     public function update(Request $request, $id)
@@ -90,7 +90,7 @@ class PeriodicExamController extends Controller
 
         $exam->update($data);
 
-        return response()->json($exam->load(['organization', 'examType', 'order', 'creator']));
+        return response()->json($exam->load(['organization', 'examType', 'order', 'creator', 'certificateType']));
     }
 
     public function destroy($id)
@@ -136,8 +136,9 @@ class PeriodicExamController extends Controller
         }
 
         return [
-            'course_start_date' => 'nullable|date',
-            'course_end_date'   => $endRules,
+            'course_start_date'   => 'nullable|date',
+            'course_end_date'     => $endRules,
+            'certificate_type_id' => 'nullable|integer|exists:certificate_types,id',
         ];
     }
 }
