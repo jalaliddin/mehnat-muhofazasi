@@ -29,8 +29,8 @@
         rounded="xl"
       >
         <template #item.role="{ item }">
-          <v-chip :color="item.role === 'admin' ? 'primary' : 'grey'" size="small" label>
-            {{ item.role === 'admin' ? 'Administrator' : 'Operator' }}
+          <v-chip :color="{ admin: 'primary', auditor: 'deep-purple' }[item.role] || 'grey'" size="small" label>
+            {{ { admin: 'Administrator', auditor: 'Auditor' }[item.role] || 'Operator' }}
           </v-chip>
         </template>
         <template #item.organization="{ item }">{{ item.organization?.name || '-' }}</template>
@@ -95,12 +95,15 @@
               @update:model-value="onRoleChange"
             />
             <v-select
-              v-if="form.role === 'operator'"
+              v-if="form.role === 'operator' || form.role === 'auditor'"
               v-model="form.organization_id"
               :items="organizations"
               item-title="name"
               item-value="id"
-              label="Tashkilot *"
+              :label="form.role === 'auditor' ? 'Tashkilot' : 'Tashkilot *'"
+              :hint="form.role === 'auditor' ? 'Bo\'sh qolsa — barcha tashkilotlar' : ''"
+              :persistent-hint="form.role === 'auditor'"
+              :clearable="form.role === 'auditor'"
               variant="outlined"
               rounded="lg"
               :rules="[v => form.role !== 'operator' || !!v || 'Majburiy maydon']"
@@ -159,6 +162,7 @@ const currentUser = computed(() => authStore.user)
 const roles = [
   { label: 'Administrator', value: 'admin' },
   { label: 'Operator', value: 'operator' },
+  { label: 'Auditor (faqat Monitoring)', value: 'auditor' },
 ]
 
 const defaultForm = () => ({

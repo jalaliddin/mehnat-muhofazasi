@@ -7,7 +7,7 @@
     </v-app-bar-title>
 
     <template #append>
-      <v-btn icon @click="goToNotifications" class="mr-1">
+      <v-btn v-if="!authStore.isAuditor" icon @click="goToNotifications" class="mr-1">
         <v-badge :content="notifStore.unreadCount" color="error" :model-value="notifStore.unreadCount > 0">
           <v-icon color="#0D1B2A">mdi-bell-outline</v-icon>
         </v-badge>

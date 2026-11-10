@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../services/api'
+import { useAuthStore } from './auth'
 
 export const useNotificationStore = defineStore('notification', () => {
   const unreadCount = ref(0)
@@ -32,6 +33,8 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   function startPolling() {
+    // Auditorga bildirishnomalar API'si yopiq — so'rov yuborilmaydi.
+    if (useAuthStore().isAuditor) return
     fetchUnreadCount()
     setInterval(fetchUnreadCount, 30000)
   }

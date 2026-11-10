@@ -72,7 +72,7 @@ async function handleLogin() {
   try {
     await authStore.login(username.value, password.value)
     notifStore.startPolling()
-    router.push('/dashboard')
+    router.push(authStore.isAuditor ? '/monitoring' : '/dashboard')
   } catch (e) {
     error.value = e.response?.data?.message || 'Xatolik yuz berdi'
   } finally {

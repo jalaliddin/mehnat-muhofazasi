@@ -48,7 +48,11 @@ router.beforeEach((to) => {
     return '/login'
   }
   if (to.meta.guest && authStore.isAuthenticated) {
-    return '/'
+    return authStore.isAuditor ? '/monitoring' : '/'
+  }
+  // Auditor uchun ichki bo'limlardan faqat Monitoring ochiq.
+  if (to.meta.requiresAuth && authStore.isAuditor && to.path !== '/monitoring') {
+    return '/monitoring'
   }
 })
 

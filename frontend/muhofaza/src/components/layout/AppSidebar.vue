@@ -24,7 +24,11 @@
     </div>
 
     <!-- Menu -->
-    <div class="pa-2 mt-1">
+    <div v-if="authStore.isAuditor" class="pa-2 mt-1">
+      <NavItem icon="mdi-monitor-eye" label="Monitoring" path="/monitoring" :rail="rail" />
+    </div>
+
+    <div v-else class="pa-2 mt-1">
 
       <!-- Dashboard -->
       <NavItem icon="mdi-view-dashboard" label="Dashboard" path="/dashboard" :rail="rail" />
@@ -145,7 +149,7 @@ async function handleLogout() {
 
 onMounted(() => {
   notifStore.startPolling()
-  fetchRetakesCount()
+  if (!authStore.isAuditor) fetchRetakesCount()
 })
 
 // ── NavItem ──────────────────────────────────────────────

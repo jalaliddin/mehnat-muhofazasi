@@ -8,6 +8,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
+  // Auditor faqat Monitoring bo'limini ko'radi.
+  const isAuditor = computed(() => user.value?.role === 'auditor')
   const organizationId = computed(() => user.value?.organization_id)
 
   async function login(username, password) {
@@ -37,5 +39,5 @@ export const useAuthStore = defineStore('auth', () => {
     return response.data
   }
 
-  return { user, token, isAuthenticated, isAdmin, organizationId, login, logout, fetchMe }
+  return { user, token, isAuthenticated, isAdmin, isAuditor, organizationId, login, logout, fetchMe }
 })
