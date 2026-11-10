@@ -53,6 +53,14 @@
         <div class="text-h5 font-weight-bold" style="color: #0D1B2A">Test vaqti tugagan</div>
       </v-card>
 
+      <!-- Savollarni yuklashda tarmoq xatosi (test davom etmoqda) -->
+      <v-card v-else-if="resumeError" rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="pa-8 text-center">
+        <v-icon icon="mdi-wifi-alert" color="warning" size="56" class="mb-4" />
+        <div class="text-h6 font-weight-bold mb-2" style="color: #0D1B2A">Savollarni yuklab bo'lmadi</div>
+        <div class="text-body-2 mb-6" style="color: #666">Testingiz davom etmoqda — internet aloqasini tekshirib, qayta urinib ko'ring.</div>
+        <v-btn color="primary" rounded="lg" size="large" :loading="resuming" @click="resumeTest">Qayta urinish</v-btn>
+      </v-card>
+
       <!-- In-progress: question form -->
       <template v-else-if="session.status === 'in_progress' && !result">
         <v-card rounded="xl" elevation="0" style="border: 1px solid #e8eaf0" class="pa-4 mb-4 d-flex align-center justify-space-between" :style="timeLeft <= 60 ? 'border-color:#f44336' : ''">
@@ -134,6 +142,8 @@ const answers = ref({})
 const starting = ref(false)
 const submitting = ref(false)
 const result = ref(null)
+const resumeError = ref(false)
+const resuming = ref(false)
 const deadline = ref(null)
 const timeLeft = ref(0)
 let timer = null
@@ -168,18 +178,25 @@ async function fetchSession() {
 
 // Sahifa yangilansa yoki qayta ochilsa: savollar va saqlangan javoblar tiklanadi, taymer davom etadi.
 async function resumeTest() {
+  resuming.value = true
   try {
     const res = await publicApi.get(`/public/exam-sessions/${token}/questions`)
     questions.value = res.data.questions
     answers.value = Object.fromEntries(
       res.data.questions.filter(q => q.selected_option).map(q => [q.exam_session_question_id, q.selected_option]),
     )
-    deadline.value = new Date(res.data.started_at).getTime() + res.data.duration_minutes * 60000
+    resumeError.value = false
+    // Qolgan vaqt serverdan — kompyuter soati noto'g'ri bo'lsa ham taymer to'g'ri ishlaydi.
+    deadline.value = Date.now() + res.data.remaining_seconds * 1000
     startTimer()
   } catch (e) {
-    // Vaqt shu orada tugagan bo'lsa
-    session.value.status = 'expired'
+    if (e.response?.status === 422) {
+      session.value.status = 'expired' // vaqt haqiqatan tugagan
+    } else {
+      resumeError.value = true // tarmoq yoki server xatosi — test davom etmoqda
+    }
   }
+  resuming.value = false
 }
 
 // Har tanlov serverga darhol yuboriladi (Monitoring uchun). Xato bo'lsa jim — topshirishda hammasi qayta yuboriladi.
@@ -195,7 +212,7 @@ async function startTest() {
     const res = await publicApi.post(`/public/exam-sessions/${token}/start`)
     questions.value = res.data.questions
     session.value.status = 'in_progress'
-    deadline.value = new Date(res.data.started_at).getTime() + res.data.duration_minutes * 60000
+    deadline.value = Date.now() + res.data.remaining_seconds * 1000
     startTimer()
   } catch (e) {
     loadError.value = e.response?.data?.message || 'Xatolik yuz berdi'

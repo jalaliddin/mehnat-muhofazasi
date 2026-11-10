@@ -69,6 +69,8 @@ const deadlineMs = ref(0)
 const now = ref(Date.now())
 let pollTimer = null
 let clockTimer = null
+// Har ochilish o'z "avlodi"ga ega: eski so'rov javobi yoki yopilgandan keyin kelgan javob taymer ishga tushirmaydi.
+let generation = 0
 
 const remaining = computed(() => Math.max(0, Math.round((deadlineMs.value - now.value) / 1000)))
 
@@ -89,16 +91,17 @@ function optionClass(q, opt) {
   return q.is_correct ? 'chosen correct' : 'chosen wrong'
 }
 
-async function load() {
+async function load(gen) {
   if (!sessionId.value) return
   try {
     const res = await api.get(`/monitoring/sessions/${sessionId.value}`)
+    if (gen !== generation) return
     detail.value = res.data
     refreshError.value = false
     if (res.data.remaining_seconds !== null) deadlineMs.value = Date.now() + res.data.remaining_seconds * 1000
     if (res.data.status !== 'in_progress') stopPolling()
   } catch (e) {
-    refreshError.value = true
+    if (gen === generation) refreshError.value = true
   }
 }
 
@@ -109,19 +112,23 @@ function stopPolling() {
 
 async function show(id) {
   stopPolling()
+  const gen = ++generation
   sessionId.value = id
   detail.value = null
   open.value = true
   loading.value = true
-  await load()
+  await load(gen)
+  if (gen !== generation || !open.value) return
   loading.value = false
-  if (detail.value?.status === 'in_progress') pollTimer = setInterval(load, POLL_MS)
+  stopPolling()
+  if (detail.value?.status === 'in_progress') pollTimer = setInterval(() => load(gen), POLL_MS)
   clearInterval(clockTimer)
   clockTimer = setInterval(() => { now.value = Date.now() }, 1000)
 }
 
 watch(open, value => {
   if (!value) {
+    generation++
     stopPolling()
     clearInterval(clockTimer)
   }
