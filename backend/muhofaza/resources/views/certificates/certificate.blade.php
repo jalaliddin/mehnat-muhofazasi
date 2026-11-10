@@ -118,7 +118,7 @@
 
         <table class="footer" style="margin-top: 6mm">
             <tr>
-                <td>Ro‘yxatdan o‘tish raqami &nbsp; <span class="underline">{{ $page['registration'] }}</span></td>
+                <td>Ro‘yxatdan o‘tish raqami &nbsp; <span class="underline">{{ $page['number'] ?: '__________' }}</span></td>
                 <td class="qr-box"><img src="{{ $page['qr'] }}" alt=""></td>
             </tr>
         </table>

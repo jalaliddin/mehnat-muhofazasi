@@ -27,7 +27,7 @@ class PublicCertificateApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'pending_signature')
             ->assertJsonPath('number', $cert->number)
-            ->assertJsonPath('registration_number', $cert->registrationLabel())
+            ->assertJsonMissingPath('registration_number')
             ->assertJsonPath('program_name', 'Mehnatni muhofaza qilish')
             ->assertJsonMissingPath('generated_path')
             ->assertJsonMissingPath('signed_path')

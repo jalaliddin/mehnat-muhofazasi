@@ -40,7 +40,6 @@ class CertificatePdf
         foreach ($certificates as $certificate) {
             $pages[] = [
                 'number'       => $certificate->number,
-                'registration' => $certificate->registrationLabel(),
                 'qr'           => $this->qrDataUri(self::verifyUrl($certificate->public_code)),
                 'data'         => $certificate->data ?? [],
             ];

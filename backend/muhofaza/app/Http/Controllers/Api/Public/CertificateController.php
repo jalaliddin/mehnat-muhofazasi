@@ -24,7 +24,6 @@ class CertificateController extends Controller
 
         return response()->json([
             'number'              => $certificate->number,
-            'registration_number' => $certificate->registrationLabel(),
             'full_name'           => $data['full_name'] ?? null,
             'program_name'        => $data['program_name'] ?? null,
             'institution_name'    => $data['institution_name'] ?? null,

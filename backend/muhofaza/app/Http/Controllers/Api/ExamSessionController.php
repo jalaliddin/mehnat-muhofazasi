@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Employee;
 use App\Models\ExamSession;
 use App\Models\PeriodicExam;
 use Illuminate\Http\Request;
@@ -44,13 +43,14 @@ class ExamSessionController extends Controller
             abort(403);
         }
 
-        $employeeIds = $data['employee_ids'] ?? Employee::where('organization_id', $exam->organization_id)
-            ->where('is_active', true)
-            ->pluck('id')
+        // Havolalar faqat shu davriy imtihonga qo'shilgan (bo'limlar bo'yicha tanlangan) faol xodimlarga yaratiladi.
+        $employeeIds = $data['employee_ids'] ?? $exam->employees()
+            ->where('employees.is_active', true)
+            ->pluck('employees.id')
             ->all();
 
         if (empty($employeeIds)) {
-            abort(422, 'Tashkilotda faol xodimlar topilmadi');
+            abort(422, "Avval imtihonga xodimlarni qo'shing (bo'limlarni tanlang)");
         }
 
         $banks = $exam->examType->questionBanks()->withCount('questions')->get();

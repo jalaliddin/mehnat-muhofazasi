@@ -77,7 +77,7 @@ class QuestionSelectionTest extends TestCase
     {
         $exam = $this->makeExam();
         $exam->examType->questionBanks()->detach();
-        $this->makeEmployee($exam);
+        $exam->employees()->attach($this->makeEmployee($exam)->id);
         Sanctum::actingAs($this->makeUser());
 
         $this->postJson('/api/exam-sessions/generate', ['periodic_exam_id' => $exam->id])
@@ -89,7 +89,7 @@ class QuestionSelectionTest extends TestCase
     {
         $exam = $this->examWith([[8, 10, 1]]);
         $exam->examType->questionBanks()->first()->update(['name' => 'Elektr xavfsizligi']);
-        $this->makeEmployee($exam);
+        $exam->employees()->attach($this->makeEmployee($exam)->id);
         Sanctum::actingAs($this->makeUser());
 
         $this->postJson('/api/exam-sessions/generate', ['periodic_exam_id' => $exam->id])

@@ -62,4 +62,24 @@ class CertificatePdfTest extends TestCase
         $this->assertSame(['year' => '2026', 'day' => '07', 'month' => 'noyabr'], CertificatePdf::dateParts('2026-11-07'));
         $this->assertNull(CertificatePdf::dateParts(null));
     }
+
+    public function test_registration_line_shows_certificate_number(): void
+    {
+        $cert = $this->makeCertificate($this->makeResult($this->makeExam()), ['number' => 'MM-0451', 'registration_number' => 7]);
+
+        $html = app(CertificatePdf::class)->html([$cert]);
+
+        $this->assertMatchesRegularExpression('/Ro‘yxatdan o‘tish raqami.{0,80}MM-0451/su', $html);
+        $this->assertStringNotContainsString('000007', $html);
+    }
+
+    public function test_registration_line_is_blank_without_number(): void
+    {
+        $cert = $this->makeCertificate($this->makeResult($this->makeExam()), ['number' => null, 'registration_number' => 8]);
+
+        $html = app(CertificatePdf::class)->html([$cert]);
+
+        $this->assertMatchesRegularExpression('/Ro‘yxatdan o‘tish raqami.{0,80}__________/su', $html);
+        $this->assertStringNotContainsString('000008', $html);
+    }
 }

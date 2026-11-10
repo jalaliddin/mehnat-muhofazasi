@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\PeriodicExam;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class PeriodicExamController extends Controller
@@ -12,7 +14,11 @@ class PeriodicExamController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = PeriodicExam::with(['organization', 'examType', 'order', 'creator', 'certificateType']);
+        $query = PeriodicExam::with([
+            'organization', 'examType', 'order', 'creator', 'certificateType',
+            // Tahrirlash shaklida tanlangan xodimlar ko'rinishi uchun — faqat ID'lar.
+            'employees' => fn ($q) => $q->select('employees.id'),
+        ]);
 
         if ($user->role === 'operator' && $user->organization_id) {
             $query->where('organization_id', $user->organization_id);
@@ -51,7 +57,10 @@ class PeriodicExamController extends Controller
             'frequency_months' => 'required|integer|min:1',
             'status'           => 'nullable|in:planned,in_progress,completed',
             ...$this->courseDateRules($request->input('course_start_date')),
+            ...self::PARTICIPANT_RULES,
         ]);
+
+        $employeeIds = $this->pullParticipants($data, (int) $data['organization_id']);
 
         $examDate = Carbon::parse($data['exam_date']);
         $data['next_exam_date'] = $examDate->copy()->addMonths((int) $data['frequency_months']);
@@ -59,6 +68,7 @@ class PeriodicExamController extends Controller
         $data['status'] = $data['status'] ?? 'planned';
 
         $exam = PeriodicExam::create($data);
+        $exam->employees()->sync($employeeIds ?? []);
 
         return response()->json($exam->load(['organization', 'examType', 'order', 'creator', 'certificateType']), 201);
     }
@@ -80,7 +90,10 @@ class PeriodicExamController extends Controller
                     ? $request->input('course_start_date')
                     : $exam->course_start_date?->toDateString()
             ),
+            ...self::PARTICIPANT_RULES,
         ]);
+
+        $employeeIds = $this->pullParticipants($data, (int) ($data['organization_id'] ?? $exam->organization_id));
 
         if (isset($data['exam_date']) || isset($data['frequency_months'])) {
             $examDate = Carbon::parse($data['exam_date'] ?? $exam->exam_date);
@@ -89,6 +102,11 @@ class PeriodicExamController extends Controller
         }
 
         $exam->update($data);
+
+        // employee_ids yuborilmagan bo'lsa (masalan, faqat nom o'zgartirilsa) ishtirokchilarga tegilmaydi.
+        if ($employeeIds !== null) {
+            $exam->employees()->sync($employeeIds);
+        }
 
         return response()->json($exam->load(['organization', 'examType', 'order', 'creator', 'certificateType']));
     }
@@ -127,6 +145,36 @@ class PeriodicExamController extends Controller
      * Kurs tugash sanasi boshlanish sanasidan oldin bo'lmasligi kerak. Boshlanish sanasi so'rovda
      * bo'lmasa (faqat tugash sanasi yangilansa), bazadagi qiymat bilan solishtiriladi.
      */
+    private const PARTICIPANT_RULES = [
+        'employee_ids'   => 'sometimes|array',
+        'employee_ids.*' => 'integer|distinct|exists:employees,id',
+    ];
+
+    /**
+     * Ishtirokchilar ro'yxatini $data dan ajratib oladi va ularning imtihon tashkilotiga tegishliligini tekshiradi.
+     * Kalit yuborilmagan bo'lsa null qaytaradi.
+     *
+     * @return list<int>|null
+     */
+    private function pullParticipants(array &$data, int $organizationId): ?array
+    {
+        if (! array_key_exists('employee_ids', $data)) {
+            return null;
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $data['employee_ids'] ?? [])));
+        unset($data['employee_ids']);
+
+        $foreign = Employee::whereIn('id', $ids)->where('organization_id', '!=', $organizationId)->exists();
+        if ($foreign) {
+            throw ValidationException::withMessages([
+                'employee_ids' => ["Xodimlar imtihon tashkilotiga tegishli bo'lishi kerak"],
+            ]);
+        }
+
+        return $ids;
+    }
+
     private function courseDateRules(?string $start): array
     {
         $endRules = ['nullable', 'date'];
