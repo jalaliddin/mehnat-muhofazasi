@@ -102,4 +102,25 @@ class ParticipantsTest extends TestCase
 
         $this->assertSame(0, ExamSession::count());
     }
+
+    public function test_generate_removes_pending_links_of_non_participants(): void
+    {
+        $exam = $this->makeExam();
+        $participant = $this->makeEmployee($exam, 'Ishtirokchi');
+        $exam->employees()->attach($participant->id);
+
+        $pending = $this->makeSession($exam, $this->makeEmployee($exam, 'Eski havola'));
+        $inProgress = $this->makeSession($exam, $this->makeEmployee($exam, 'Yechayotgan'));
+        $inProgress->update(['status' => 'in_progress', 'started_at' => now()]);
+        $completed = $this->makeSession($exam, $this->makeEmployee($exam, 'Tugatgan'));
+        $completed->update(['status' => 'completed', 'finished_at' => now()]);
+        Sanctum::actingAs($this->makeUser('admin'));
+
+        $this->postJson('/api/exam-sessions/generate', ['periodic_exam_id' => $exam->id])->assertOk();
+
+        $this->assertNull(ExamSession::find($pending->id));
+        $this->assertNotNull(ExamSession::find($inProgress->id));
+        $this->assertNotNull(ExamSession::find($completed->id));
+        $this->assertTrue(ExamSession::where('periodic_exam_id', $exam->id)->where('employee_id', $participant->id)->exists());
+    }
 }

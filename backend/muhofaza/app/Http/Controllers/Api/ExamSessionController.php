@@ -65,6 +65,15 @@ class ExamSessionController extends Controller
             }
         }
 
+        // Imtihonga kirmagan xodimlarning hali boshlanmagan eski havolalari o'chiriladi
+        // (boshlangan va tugagan testlarga tegilmaydi).
+        if (! isset($data['employee_ids'])) {
+            ExamSession::where('periodic_exam_id', $exam->id)
+                ->where('status', 'pending')
+                ->whereNotIn('employee_id', $employeeIds)
+                ->delete();
+        }
+
         $sessions = [];
 
         foreach ($employeeIds as $employeeId) {
