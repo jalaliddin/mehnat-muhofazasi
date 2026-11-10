@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\ExamSessionController;
 use App\Http\Controllers\Api\ExamTypeController;
 use App\Http\Controllers\Api\ExamTypeQuestionBankController;
+use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrganizationController;
@@ -49,6 +50,14 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });
+});
+
+// Monitoring (faqat o'qish): admin, operator va auditor.
+Route::middleware('auth:sanctum')->prefix('monitoring')->group(function () {
+    Route::get('/active', [MonitoringController::class, 'active']);
+    Route::get('/finished', [MonitoringController::class, 'finished']);
+    Route::get('/exams', [MonitoringController::class, 'exams']);
+    Route::get('/sessions/{id}', [MonitoringController::class, 'show']);
 });
 
 // Auditor bu guruhga kira olmaydi — u faqat monitoring/* ni ko'radi.
