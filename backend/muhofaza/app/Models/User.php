@@ -35,6 +35,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function isAuditor(): bool
+    {
+        return $this->role === 'auditor';
+    }
+
     public function organization()
     {
         return $this->belongsTo(Organization::class);

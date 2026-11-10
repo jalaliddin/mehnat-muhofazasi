@@ -28,7 +28,7 @@ class UserController extends Controller
             'username'        => 'required|string|unique:users,username',
             'email'           => 'required|email|unique:users,email',
             'password'        => 'required|string|min:6',
-            'role'            => 'required|in:admin,operator',
+            'role'            => 'required|in:admin,operator,auditor',
             'organization_id' => 'nullable|exists:organizations,id',
             'is_active'       => 'boolean',
         ]);
@@ -48,7 +48,7 @@ class UserController extends Controller
             'username'        => 'sometimes|string|unique:users,username,' . $id,
             'email'           => 'sometimes|email|unique:users,email,' . $id,
             'password'        => 'nullable|string|min:6',
-            'role'            => 'sometimes|in:admin,operator',
+            'role'            => 'sometimes|in:admin,operator,auditor',
             'organization_id' => 'nullable|exists:organizations,id',
             'is_active'       => 'boolean',
         ]);

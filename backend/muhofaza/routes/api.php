@@ -49,7 +49,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// Auditor bu guruhga kira olmaydi — u faqat monitoring/* ni ko'radi.
+Route::middleware(['auth:sanctum', 'deny.auditor'])->group(function () {
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/upcoming-exams', [DashboardController::class, 'upcomingExams']);
