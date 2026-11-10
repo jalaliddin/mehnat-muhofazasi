@@ -31,6 +31,8 @@ Route::prefix('public/exam-sessions')->group(function () {
     Route::get('/{token}', [PublicExamSessionController::class, 'show']);
     Route::post('/{token}/start', [PublicExamSessionController::class, 'start']);
     Route::post('/{token}/submit', [PublicExamSessionController::class, 'submit']);
+    Route::put('/{token}/answer', [PublicExamSessionController::class, 'answer']);
+    Route::get('/{token}/questions', [PublicExamSessionController::class, 'questions']);
 });
 
 // Public certificate verification (QR code), no auth

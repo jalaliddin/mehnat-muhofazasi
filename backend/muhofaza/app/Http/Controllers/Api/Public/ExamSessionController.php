@@ -173,6 +173,61 @@ class ExamSessionController extends Controller
         ]);
     }
 
+    /**
+     * Javob har tanlovda saqlanadi — Monitoring jarayonni real vaqtda ko'rishi va sahifa yangilanganda
+     * javoblar tiklanishi uchun. Baholash hozirgidek submit'da.
+     */
+    public function answer(Request $request, $token)
+    {
+        $session = $this->findSessionAndExpire($token);
+
+        if ($session->status !== 'in_progress') {
+            abort(422, 'Test boshlanmagan yoki yakunlangan');
+        }
+
+        $data = $request->validate([
+            'exam_session_question_id' => 'required|integer',
+            'selected_option'          => 'required|string|size:1',
+        ]);
+
+        $sessionQuestion = $session->sessionQuestions()->whereKey($data['exam_session_question_id'])->first();
+        if (! $sessionQuestion) {
+            abort(422, 'Savol bu testga tegishli emas');
+        }
+
+        if (! in_array($data['selected_option'], array_column($sessionQuestion->shuffled_options, 'key'), true)) {
+            abort(422, "Bunday variant yo'q");
+        }
+
+        $sessionQuestion->update(['selected_option' => $data['selected_option'], 'answered_at' => now()]);
+
+        return response()->json(['saved' => true]);
+    }
+
+    /**
+     * Boshlangan testni davom ettirish (sahifa yangilansa yoki qayta ochilsa): savollar va saqlangan javoblar.
+     */
+    public function questions($token)
+    {
+        $session = $this->findSessionAndExpire($token);
+
+        if ($session->status !== 'in_progress') {
+            abort(422, 'Test boshlanmagan yoki yakunlangan');
+        }
+
+        return response()->json([
+            'started_at'       => $session->started_at,
+            'duration_minutes' => $session->duration_minutes,
+            'questions'        => $session->sessionQuestions()->with('question')->get()->map(fn ($sq) => [
+                'exam_session_question_id' => $sq->id,
+                'question_order'           => $sq->question_order,
+                'question_text'            => $sq->question->question_text,
+                'options'                  => $sq->shuffled_options,
+                'selected_option'          => $sq->selected_option,
+            ]),
+        ]);
+    }
+
     private function findSessionAndExpire(string $token): ExamSession
     {
         $session = ExamSession::where('token', $token)->firstOrFail();
