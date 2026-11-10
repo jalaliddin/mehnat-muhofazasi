@@ -131,6 +131,19 @@ Savollar imtihon turidan mustaqil **bazalarda** saqlanadi (masalan, "Elektr xavf
 - Yangilashda mavjud savollar avtomatik ravishda imtihon turi nomli bazaga ko'chadi va tarkibga "hamma savol" yoziladi — mavjud testlar avvalgidek ishlaydi.
 - **Bu versiyani deploy qilishdan oldin bazadan zaxira oling** (`docker compose exec mysql mysqldump -uroot -p muhofaza > backup.sql`). Migratsiya yarim yo'lda to'xtasa, `migrate` qayta ishga tushganda qolgan joyidan davom etadi.
 
+## Audit va monitoring
+
+**Monitoring** sahifasi test topshirilishini real vaqtda kuzatish uchun:
+
+- **"Hozir yechilmoqda"** — kim test yechyapti, nechta savolga javob bergan, qancha vaqt qolgan va oxirgi faollik (har 5 soniyada yangilanadi). Qatorni bosganda yon panelda har bir savol, tanlangan variant (to'g'ri — yashil, noto'g'ri — qizil) va to'g'ri javob ko'rinadi (har 3 soniyada yangilanadi).
+- **"Yakunlangan"** — topshirilgan testlar natijalari (imtihon, sana va ism bo'yicha filtr), batafsil javoblari bilan.
+
+Buning uchun test sahifasi har tanlangan javobni darhol serverga saqlaydi; sahifa yangilansa yoki qayta ochilsa, javoblar va taymer tiklanadi.
+
+**Auditor roli** ("Foydalanuvchilar"da yaratiladi) faqat Monitoring'ni ko'radi — boshqa sahifa va API'lar unga yopiq. Tashkilot biriktirilsa — faqat shu tashkilotni, biriktirilmasa — barcha tashkilotlarni kuzatadi. Admin va operator ham Monitoring'ni ko'radi (operator — o'z tashkilotini).
+
+"Havolalarni yaratish" faqat imtihonga qo'shilgan xodimlarga havola yaratadi va imtihonga kirmagan xodimlarning hali boshlanmagan eski havolalarini o'chiradi.
+
 ## Testlar
 
 Backend testlari alohida `muhofaza_test` MySQL bazasida ishlaydi (ishchi bazaga tegmaydi):
