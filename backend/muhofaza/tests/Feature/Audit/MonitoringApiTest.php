@@ -173,4 +173,18 @@ class MonitoringApiTest extends TestCase
 
         $this->assertSame([['id' => $examA->id, 'title' => 'A imtihoni']], $this->getJson('/api/monitoring/exams')->assertOk()->json());
     }
+
+    public function test_session_detail_of_expired_session_scores_answers_live(): void
+    {
+        [$session, $ids] = $this->started();
+        $this->answer($session, $ids[0], 'A');
+        $session->update(['status' => 'expired']);
+        Sanctum::actingAs($this->makeUser('auditor'));
+
+        $res = $this->getJson("/api/monitoring/sessions/{$session->id}")->assertOk();
+
+        $answered = collect($res->json('questions'))->firstWhere('selected_option', 'A');
+        $this->assertTrue($answered['is_correct']);
+        $this->assertSame(1, $res->json('summary.correct'));
+    }
 }

@@ -87,7 +87,8 @@ class MonitoringController extends Controller
         $session = ExamSession::with(['employee', 'periodicExam.organization', 'examResult', 'sessionQuestions.question'])->findOrFail($id);
         $this->authorizeSession($request->user(), $session);
 
-        $live = $session->status === 'in_progress';
+        // Faqat topshirilgan testda saqlangan baho bor; qolganlarida (davom etayotgan, vaqti tugagan) jonli hisoblanadi.
+        $live = $session->status !== 'completed';
 
         $questions = $session->sessionQuestions->map(function ($sq) use ($live) {
             $selected = $sq->selected_option;
@@ -119,7 +120,7 @@ class MonitoringController extends Controller
             'periodic_exam'     => ['id' => $session->periodicExam->id, 'title' => $session->periodicExam->title],
             'started_at'        => $session->started_at,
             'finished_at'       => $session->finished_at,
-            'remaining_seconds' => $live ? $this->remainingSeconds($session) : null,
+            'remaining_seconds' => $session->status === 'in_progress' ? $this->remainingSeconds($session) : null,
             'summary'           => [
                 'answered'      => $questions->whereNotNull('selected_option')->count(),
                 'total'         => $questions->count(),

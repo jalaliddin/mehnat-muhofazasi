@@ -82,9 +82,10 @@ class ExamSessionController extends Controller
         });
 
         return response()->json([
-            'started_at'       => $session->started_at,
-            'duration_minutes' => $session->duration_minutes,
-            'questions'        => $sessionQuestions,
+            'started_at'        => $session->started_at,
+            'duration_minutes'  => $session->duration_minutes,
+            'remaining_seconds' => $this->remainingSeconds($session),
+            'questions'         => $sessionQuestions,
         ]);
     }
 
@@ -179,9 +180,12 @@ class ExamSessionController extends Controller
      */
     public function answer(Request $request, $token)
     {
-        $session = $this->findSessionAndExpire($token);
+        // Faqat o'qiladi — holat o'zgartirilmaydi: kechikkan avtosaqlash (mijoz soati farqi yoki oxirgi
+        // soniyadagi bosish) sessiyani "expired" qilib qo'ysa, undan keyin kelgan avtomatik topshirish
+        // rad etilib, test butunlay yo'qolardi.
+        $session = ExamSession::where('token', $token)->firstOrFail();
 
-        if ($session->status !== 'in_progress') {
+        if ($session->status !== 'in_progress' || $this->remainingSeconds($session) <= 0) {
             abort(422, 'Test boshlanmagan yoki yakunlangan');
         }
 
@@ -216,9 +220,10 @@ class ExamSessionController extends Controller
         }
 
         return response()->json([
-            'started_at'       => $session->started_at,
-            'duration_minutes' => $session->duration_minutes,
-            'questions'        => $session->sessionQuestions()->with('question')->get()->map(fn ($sq) => [
+            'started_at'        => $session->started_at,
+            'duration_minutes'  => $session->duration_minutes,
+            'remaining_seconds' => $this->remainingSeconds($session),
+            'questions'         => $session->sessionQuestions()->with('question')->get()->map(fn ($sq) => [
                 'exam_session_question_id' => $sq->id,
                 'question_order'           => $sq->question_order,
                 'question_text'            => $sq->question->question_text,
@@ -226,6 +231,20 @@ class ExamSessionController extends Controller
                 'selected_option'          => $sq->selected_option,
             ]),
         ]);
+    }
+
+    /**
+     * Qolgan vaqt server soatidan — mijoz taymeri shundan hisoblanadi (kompyuter soati noto'g'ri bo'lsa ham).
+     */
+    private function remainingSeconds(ExamSession $session): int
+    {
+        if (! $session->started_at) {
+            return 0;
+        }
+
+        $deadline = $session->started_at->copy()->addMinutes($session->duration_minutes);
+
+        return max(0, $deadline->getTimestamp() - now()->getTimestamp());
     }
 
     private function findSessionAndExpire(string $token): ExamSession

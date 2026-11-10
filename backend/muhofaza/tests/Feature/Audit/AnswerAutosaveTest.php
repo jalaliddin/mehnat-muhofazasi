@@ -86,14 +86,35 @@ class AnswerAutosaveTest extends TestCase
         $this->assertSame($score, ExamResult::where('employee_id', $session->employee_id)->value('score'));
     }
 
-    public function test_answer_after_deadline_returns_422_and_expires_session(): void
+    public function test_late_answer_is_rejected_without_voiding_the_test(): void
     {
         [$session, $ids] = $this->started();
-        Carbon::setTestNow(now()->addMinutes(31));
+        Carbon::setTestNow(now()->addMinutes(30)->addSecond());
 
-        $this->answer($session, $ids[0], 'A')->assertStatus(422);
+        // Kechikkan avtosaqlash (soat farqi yoki oxirgi soniyadagi bosish) rad etiladi, lekin sessiya buzilmaydi...
+        $this->answer($session, $ids[0], 'A')
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Test boshlanmagan yoki yakunlangan');
+        $this->assertSame('in_progress', $session->fresh()->status);
 
-        $this->assertSame('expired', $session->fresh()->status);
+        // ...va undan keyin kelgan avtomatik topshirish baholanadi.
+        $this->postJson("/api/public/exam-sessions/{$session->token}/submit", ['answers' => [
+            ['exam_session_question_id' => $ids[0], 'selected_option' => 'A'],
+        ]])->assertOk();
+        $this->assertSame(1, ExamResult::where('employee_id', $session->employee_id)->count());
+        Carbon::setTestNow();
+    }
+
+    public function test_start_and_questions_return_server_remaining_seconds(): void
+    {
+        Carbon::setTestNow('2026-11-10 10:00:00');
+        $exam = $this->makeExam();
+        $session = $this->makeSession($exam, $this->makeEmployee($exam));
+
+        $this->postJson("/api/public/exam-sessions/{$session->token}/start")->assertOk()->assertJsonPath('remaining_seconds', 1800);
+
+        Carbon::setTestNow('2026-11-10 10:05:00');
+        $this->getJson("/api/public/exam-sessions/{$session->token}/questions")->assertOk()->assertJsonPath('remaining_seconds', 1500);
         Carbon::setTestNow();
     }
 
