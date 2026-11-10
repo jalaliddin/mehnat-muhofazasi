@@ -242,25 +242,29 @@
               <v-col cols="12">
                 <v-divider class="mb-4" />
                 <div class="text-subtitle-2 mb-2" style="color: #0D1B2A">Xodimlarni tanlash</div>
-                <v-row dense class="mb-2">
-                  <v-col cols="12" sm="6">
-                    <v-select
-                      v-model="empFilterDept"
-                      :items="dialogDepartments"
-                      item-title="name"
-                      item-value="id"
-                      label="Bo'lim bo'yicha filter"
-                      variant="outlined"
-                      density="compact"
-                      hide-details
-                      rounded="lg"
-                      clearable
-                    />
-                  </v-col>
-                </v-row>
+                <v-autocomplete
+                  v-model="selectedDepartments"
+                  :items="dialogDepartments"
+                  item-title="name"
+                  item-value="id"
+                  label="Bo'limlar"
+                  hint="Bo'lim tanlansa, uning barcha faol xodimlari qo'shiladi; olib tashlansa — chiqariladi"
+                  persistent-hint
+                  variant="outlined"
+                  rounded="lg"
+                  multiple
+                  chips
+                  closable-chips
+                  class="mb-4"
+                  @update:model-value="onDepartmentsChange"
+                />
+                <div class="text-body-2 mb-2" style="color: #555">
+                  Tanlangan: <strong>{{ form.employee_ids.length }} ta xodim</strong>
+                  <span style="color: #999"> — ro'yxatdan qo'lda olib tashlash yoki qo'shish mumkin</span>
+                </div>
                 <v-autocomplete
                   v-model="form.employee_ids"
-                  :items="filteredDialogEmployees"
+                  :items="dialogEmployees"
                   item-title="full_name"
                   item-value="id"
                   label="Xodimlar"
@@ -316,7 +320,8 @@ const filterOrg = ref(null)
 const filterStatus = ref(null)
 const filterType = ref(null)
 const filterYear = ref(null)
-const empFilterDept = ref(null)
+const selectedDepartments = ref([])
+let previousDepartments = []
 const nextDateDisplay = ref('')
 const formRef = ref(null)
 const confirmRef = ref(null)
@@ -354,10 +359,24 @@ const headers = [
   { title: 'Amallar', key: 'actions', sortable: false, align: 'end' },
 ]
 
-const filteredDialogEmployees = computed(() => {
-  if (!empFilterDept.value) return dialogEmployees.value
-  return dialogEmployees.value.filter(e => e.department_id === empFilterDept.value)
-})
+function activeEmployeeIdsOf(departmentIds) {
+  return dialogEmployees.value
+    .filter(e => departmentIds.includes(e.department_id) && e.is_active !== false)
+    .map(e => e.id)
+}
+
+// Bo'lim qo'shilsa — uning faol xodimlari ro'yxatga qo'shiladi, olib tashlansa — chiqariladi.
+function onDepartmentsChange(departmentIds) {
+  const added = departmentIds.filter(id => !previousDepartments.includes(id))
+  const removed = previousDepartments.filter(id => !departmentIds.includes(id))
+  const toRemove = new Set(activeEmployeeIdsOf(removed))
+  const next = form.value.employee_ids.filter(id => !toRemove.has(id))
+  for (const id of activeEmployeeIdsOf(added)) {
+    if (!next.includes(id)) next.push(id)
+  }
+  form.value.employee_ids = next
+  previousDepartments = [...departmentIds]
+}
 
 const filteredExams = computed(() => {
   let list = exams.value
@@ -404,9 +423,11 @@ function onTypeChange(typeId) {
   }
 }
 
-async function onDialogOrgChange(orgId) {
-  form.value.employee_ids = []
-  empFilterDept.value = null
+async function onDialogOrgChange(orgId, keepSelection = false) {
+  // Tahrirlashda saqlangan ishtirokchilar o'chib ketmasin; tashkilot almashtirilganda esa tanlov tozalanadi.
+  if (!keepSelection) form.value.employee_ids = []
+  selectedDepartments.value = []
+  previousDepartments = []
   if (orgId) {
     loadingEmployees.value = true
     const [empRes, deptRes] = await Promise.all([
@@ -426,7 +447,8 @@ function openCreate() {
   editItem.value = null
   form.value = defaultForm()
   nextDateDisplay.value = ''
-  empFilterDept.value = null
+  selectedDepartments.value = []
+  previousDepartments = []
   if (!authStore.isAdmin) {
     onDialogOrgChange(authStore.organizationId)
   }
@@ -449,7 +471,7 @@ function openEdit(item) {
     certificate_type_id: item.certificate_type_id || null,
   }
   calcNextDate()
-  onDialogOrgChange(item.organization_id)
+  onDialogOrgChange(item.organization_id, true)
   dialog.value = true
 }
 

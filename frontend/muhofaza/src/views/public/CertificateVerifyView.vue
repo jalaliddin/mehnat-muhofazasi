@@ -85,7 +85,6 @@ const rows = computed(() => {
   return [
     { label: 'F.I.O.', value: c.full_name || '—' },
     { label: 'Sertifikat №', value: c.number || '—' },
-    { label: "Ro'yxatdan o'tish raqami", value: c.registration_number },
     { label: 'Dastur', value: c.program_name || '—' },
     { label: "Ta'lim muassasasi", value: c.institution_name || '—' },
     { label: 'Kurs muddati', value: period },
