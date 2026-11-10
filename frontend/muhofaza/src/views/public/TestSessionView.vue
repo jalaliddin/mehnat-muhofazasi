@@ -72,7 +72,12 @@
           class="pa-6 mb-4"
         >
           <div class="font-weight-bold mb-3" style="color: #0D1B2A">{{ idx + 1 }}. {{ q.question_text }}</div>
-          <v-radio-group v-model="answers[q.exam_session_question_id]" hide-details class="answer-group">
+          <v-radio-group
+            v-model="answers[q.exam_session_question_id]"
+            hide-details
+            class="answer-group"
+            @update:model-value="option => saveAnswer(q.exam_session_question_id, option)"
+          >
             <v-radio
               v-for="opt in q.options"
               :key="opt.key"
@@ -152,14 +157,36 @@ async function fetchSession() {
   try {
     const res = await publicApi.get(`/public/exam-sessions/${token}`)
     session.value = res.data
-    if (session.value.status === 'in_progress' && session.value.started_at) {
-      deadline.value = new Date(session.value.started_at).getTime() + session.value.duration_minutes * 60000
-      startTimer()
+    if (session.value.status === 'in_progress') {
+      await resumeTest()
     }
   } catch (e) {
     loadError.value = "Test havolasi topilmadi yoki noto'g'ri."
   }
   loading.value = false
+}
+
+// Sahifa yangilansa yoki qayta ochilsa: savollar va saqlangan javoblar tiklanadi, taymer davom etadi.
+async function resumeTest() {
+  try {
+    const res = await publicApi.get(`/public/exam-sessions/${token}/questions`)
+    questions.value = res.data.questions
+    answers.value = Object.fromEntries(
+      res.data.questions.filter(q => q.selected_option).map(q => [q.exam_session_question_id, q.selected_option]),
+    )
+    deadline.value = new Date(res.data.started_at).getTime() + res.data.duration_minutes * 60000
+    startTimer()
+  } catch (e) {
+    // Vaqt shu orada tugagan bo'lsa
+    session.value.status = 'expired'
+  }
+}
+
+// Har tanlov serverga darhol yuboriladi (Monitoring uchun). Xato bo'lsa jim — topshirishda hammasi qayta yuboriladi.
+function saveAnswer(examSessionQuestionId, option) {
+  publicApi
+    .put(`/public/exam-sessions/${token}/answer`, { exam_session_question_id: examSessionQuestionId, selected_option: option })
+    .catch(() => {})
 }
 
 async function startTest() {
