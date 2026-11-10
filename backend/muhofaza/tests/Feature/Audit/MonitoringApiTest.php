@@ -71,7 +71,8 @@ class MonitoringApiTest extends TestCase
         $this->assertSame('Ishlayapti', $rows[0]['employee']['full_name']);
         $this->assertSame(1, $rows[0]['answered']);
         $this->assertSame(2, $rows[0]['total']);
-        $this->assertNotNull($rows[0]['last_activity_at']);
+        // Brauzer to'g'ri vaqt mintaqasida o'qishi uchun ISO 8601 (UTC, "Z") bo'lishi shart.
+        $this->assertMatchesRegularExpression('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$/', $rows[0]['last_activity_at']);
     }
 
     public function test_active_remaining_seconds_uses_server_clock(): void

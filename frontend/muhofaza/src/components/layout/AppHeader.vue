@@ -35,6 +35,7 @@ const notifStore = useNotificationStore()
 
 const pageTitles = {
   '/dashboard': 'Dashboard',
+  '/monitoring': 'Monitoring',
   '/organizations': 'Tashkilotlar',
   '/employees': 'Xodimlar',
   '/departments': "Bo'limlar",

@@ -8,6 +8,7 @@ use App\Models\PeriodicExam;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 /**
  * Testlarni real vaqtda kuzatish (faqat o'qish). Admin — hammasi; tashkiloti biriktirilgan
@@ -39,7 +40,7 @@ class MonitoringController extends Controller
                 'remaining_seconds' => $this->remainingSeconds($s),
                 'answered'          => (int) $s->answered,
                 'total'             => (int) $s->total,
-                'last_activity_at'  => $s->last_activity_at,
+                'last_activity_at'  => $this->isoUtc($s->last_activity_at),
             ])
             ->values();
 
@@ -169,6 +170,15 @@ class MonitoringController extends Controller
         $deadline = $session->started_at->copy()->addMinutes($session->duration_minutes);
 
         return max(0, $deadline->getTimestamp() - now()->getTimestamp());
+    }
+
+    /**
+     * Agregat (withMax) qiymati xom DB satri bo'lib keladi — vaqt mintaqasisiz. Uni boshqa sanalar kabi
+     * UTC ISO 8601 ("…Z") ga keltiramiz, aks holda brauzer uni mahalliy vaqt deb o'qiydi.
+     */
+    private function isoUtc(?string $value): ?string
+    {
+        return $value === null ? null : Carbon::parse($value, config('app.timezone'))->utc()->toJSON();
     }
 
     private function employee(ExamSession $session): array

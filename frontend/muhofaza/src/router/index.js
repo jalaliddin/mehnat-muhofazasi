@@ -26,6 +26,7 @@ const routes = [
       { path: 'exams/types/:id/questions', redirect: '/exams/question-banks' },
       { path: 'exams/retakes', component: () => import('../views/exams/RetakesView.vue') },
       { path: 'certificates', component: () => import('../views/certificates/CertificatesView.vue') },
+      { path: 'monitoring', component: () => import('../views/monitoring/MonitoringView.vue') },
       { path: 'orders', component: () => import('../views/orders/OrdersView.vue') },
       { path: 'notifications', component: () => import('../views/notifications/NotificationsView.vue') },
       { path: 'reports', component: () => import('../views/reports/ReportsView.vue') },
